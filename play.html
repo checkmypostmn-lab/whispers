@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1,viewport-fit=cover><link rel=icon href=favicon.png><meta property=og:image content=https://checkmypostmn-lab.github.io/whispers/share.jpg><meta name=twitter:card content=summary_large_image></head><body><title>Сүгийн бөмбөлөг</title>
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1,viewport-fit=cover><link rel=icon href=favicon.png><meta property=og:image content=https://checkmypostmn-lab.github.io/whispers/share.jpg><meta name=twitter:card content=summary_large_image></head><body><title>Далд ертөнц</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito:wght@400;600&display=swap">
@@ -84,7 +84,7 @@ body{background:var(--night);color:var(--ink);font-family:var(--body);overflow:h
   <div class="thought" id="readText"></div>
   <div class="meta" id="readMeta"></div>
   <form class="paper" id="replyForm" style="width:100%">
-    <textarea id="replyInput" rows="2" maxlength="280" placeholder="Хариу бич… (чиний сүг үүнтэй нийлнэ)" aria-label="Хариу"></textarea>
+    <textarea id="replyInput" rows="2" maxlength="280" placeholder="Хариу бич… (чиний үг үүнтэй нийлнэ)" aria-label="Хариу"></textarea>
     <button class="btn" type="submit">Хариулах</button>
   </form>
   <div class="row"><button class="ghost" id="closeCard">Хаах</button></div>
@@ -120,13 +120,13 @@ body{background:var(--night);color:var(--ink);font-family:var(--body);overflow:h
 "use strict";
 // ---------- tiny utils ----------
 const $=id=>document.getElementById(id);
-const EN={"Далд ертөнц": "Hidden World", "Гаднах гэрэл": "Outer light", "Дотоод гэрэл": "Inner light", "Дуу": "Sound", "♪ дуу": "♪ sound", "♪ дуугүй": "♪ muted", "Үүүү…": "Hooo…", "Энд юу байгаасай гэж хүсэж байна?": "What do you wish were here?", "Өнөөдөр чамд юу хамгийн их санагдав?": "What did you feel most today?", "Хэнд ч хэлээгүй нэг бодол байна уу?": "Is there a thought you've told no one?", "Чиний цонхоор юу харагддаг вэ?": "What do you see from your window?", "Сүүлд хэзээ инээсэн бэ?": "When did you last laugh?", "Гадагш гарах": "Go outside", "Гэртээ буцах": "Go home", "Бодлоо сулла": "Release a thought", "Болих": "Cancel", "Бич…": "Write…", "Бичих": "Write", "Илгээх": "Send", "Бичсэн үг чинь сүг болно. Хэрхэн бичсэн нь ч гэсэн.": "Your words take shape. So does the way you write them.", "Төөрсөн сүг": "A wandering thought", "Хариу бич… (чиний сүг үүнтэй нийлнэ)": "Write back… (your words will merge with it)", "Хариу": "Reply", "Хариулах": "Reply", "Хаах": "Close", "Одоохондоо нам гүм байна. Анхны бодлыг чи сулла.": "It's quiet for now. Release the first thought.", "Хуваалцах ертөнцөд холбогдож байна…": "Connecting to the shared world…", "Сулласан бодол чинь утсаараа гэртээ буцаж ирлээ.": "Your released thought followed its thread back home.", "Энд бичсэн зүйл зөвхөн чиний бөмбөлөгт үлдэнэ.": "What you write here stays only in your bubble.", "Төөрсөн сүг дээр дарж, сонсоорой.": "Tap a wandering thought and listen.", "Цэнхэр утас бүрийн цаана нэг хүн бий.": "Behind every blue thread is a person.", "Дотоод гэрэл чинь хэтэрхий бүдэг байна. Эхлээд гэртээ нэг зүйл бүтээ.": "Your inner light is too dim. Make something at home first.", "Энэ бодол чинь ертөнцөөр төөрнө. Хэн нэгэн олж сонсож магад.": "This thought will wander the world. Someone may find it and listen.", "Сулласан бодол нэргүйгээр бусдад харагдана. Хувийн мэдээлэл бүү бич.": "Released thoughts are seen by others without your name. Don't write personal details.", "Сулласан бодол…": "A thought to release…", "Бодол чинь цэнхэр утсаа чирсээр ертөнц рүү гарлаа.": "Your thought went out into the world, trailing its blue thread.", "Сулалж чадсангүй. Дахин оролдоорой.": "Couldn't release it. Please try again.", "Хана чинь туналлаа. Гадагш гарч болно.": "Your walls have cleared. You can go outside now.", "Бөмбөлөг дотор чинь шинэ зүйл биежлээ.": "Something new took shape inside your bubble.", "Хана нь хаалттай. Дотор нь юу байгааг гаднаас харахгүй.": "The walls are closed. You can't see inside from out here.", "Чиний сулласан бодол. ": "Your released thought. ", " хүн энэ сүгтэй нийлсэн.": " people merged with this thought.", "Одоохондоо хэн ч хариулаагүй.": "No one has answered yet.", "Чиний сүг харанхуй байлаа. Буланд нэг хар сүг нэмэгдлээ.": "Your words were dark. A dark shape joined the corner.", "Чиний сүг тэр бодолтой нийллээ.": "Your words merged with that thought.", "Хариу хүрсэнгүй. Дахин оролдоорой.": "Your reply didn't arrive. Please try again.", "Чиний сулласан сүг буцаж ирэхдээ өөр болжээ. Хэн нэгэн сонссон.": "Your released thought came back changed. Someone listened.", " хүн чиний сүгийг сонсчээ.": " people listened to your thought.", "Хуваалцах ертөнц удаан ачаалж байна.": "The shared world is slow to load.", "✎ санал": "✎ idea", "📖 ном": "📖 the book", "Тоглоомд юу нэмэх, засах вэ?": "What should the game add or change?", "Санаагаа бич…": "Write your idea…", "Илгээлээ. Баярлалаа!": "Sent. Thank you!", "Илгээж чадсангүй.": "Couldn't send it."};
+const EN={"Далд ертөнц": "Hidden World", "Гаднах гэрэл": "Outer light", "Дотоод гэрэл": "Inner light", "Дуу": "Sound", "♪ дуу": "♪ sound", "♪ дуугүй": "♪ muted", "Үүүү…": "Hooo…", "Энд юу байгаасай гэж хүсэж байна?": "What do you wish were here?", "Өнөөдөр чамд юу хамгийн их санагдав?": "What did you feel most today?", "Хэнд ч хэлээгүй нэг бодол байна уу?": "Is there a thought you've told no one?", "Чиний цонхоор юу харагддаг вэ?": "What do you see from your window?", "Сүүлд хэзээ инээсэн бэ?": "When did you last laugh?", "Гадагш гарах": "Go outside", "Гэртээ буцах": "Go home", "Бодлоо сулла": "Release a thought", "Болих": "Cancel", "Бич…": "Write…", "Бичих": "Write", "Илгээх": "Send", "Бичсэн үг чинь биежинэ. Хэрхэн бичсэн нь ч гэсэн.": "Your words take shape. So does the way you write them.", "Төөрсөн бодол": "A wandering thought", "Хариу бич… (чиний үг үүнтэй нийлнэ)": "Write back… (your words will merge with it)", "Хариу": "Reply", "Хариулах": "Reply", "Хаах": "Close", "Одоохондоо нам гүм байна. Анхны бодлыг чи сулла.": "It's quiet for now. Release the first thought.", "Хуваалцах ертөнцөд холбогдож байна…": "Connecting to the shared world…", "Сулласан бодол чинь утсаараа гэртээ буцаж ирлээ.": "Your released thought followed its thread back home.", "Энд бичсэн зүйл зөвхөн чиний бөмбөлөгт үлдэнэ.": "What you write here stays only in your bubble.", "Төөрсөн бодол дээр дарж, сонсоорой.": "Tap a wandering thought and listen.", "Цэнхэр утас бүрийн цаана нэг хүн бий.": "Behind every blue thread is a person.", "Дотоод гэрэл чинь хэтэрхий бүдэг байна. Эхлээд гэртээ нэг зүйл бүтээ.": "Your inner light is too dim. Make something at home first.", "Энэ бодол чинь ертөнцөөр төөрнө. Хэн нэгэн олж сонсож магад.": "This thought will wander the world. Someone may find it and listen.", "Сулласан бодол нэргүйгээр бусдад харагдана. Хувийн мэдээлэл бүү бич.": "Released thoughts are seen by others without your name. Don't write personal details.", "Сулласан бодол…": "A thought to release…", "Бодол чинь цэнхэр утсаа чирсээр ертөнц рүү гарлаа.": "Your thought went out into the world, trailing its blue thread.", "Сулалж чадсангүй. Дахин оролдоорой.": "Couldn't release it. Please try again.", "Хана чинь туналлаа. Гадагш гарч болно.": "Your walls have cleared. You can go outside now.", "Бөмбөлөг дотор чинь шинэ зүйл биежлээ.": "Something new took shape inside your bubble.", "Хана нь хаалттай. Дотор нь юу байгааг гаднаас харахгүй.": "The walls are closed. You can't see inside from out here.", "Чиний сулласан бодол. ": "Your released thought. ", " хүн энэ бодолтой нийлсэн.": " people merged with this thought.", "Одоохондоо хэн ч хариулаагүй.": "No one has answered yet.", "Чиний үг харанхуй байлаа. Буланд нэг хар дүрс нэмэгдлээ.": "Your words were dark. A dark shape joined the corner.", "Чиний үг тэр бодолтой нийллээ.": "Your words merged with that thought.", "Хариу хүрсэнгүй. Дахин оролдоорой.": "Your reply didn't arrive. Please try again.", "Чиний сулласан бодол буцаж ирэхдээ өөр болжээ. Хэн нэгэн сонссон.": "Your released thought came back changed. Someone listened.", " хүн чиний бодлыг сонсчээ.": " people listened to your thought.", "Хуваалцах ертөнц удаан ачаалж байна.": "The shared world is slow to load.", "✎ санал": "✎ idea", "📖 ном": "📖 the book", "Тоглоомд юу нэмэх, засах вэ?": "What should the game add or change?", "Санаагаа бич…": "Write your idea…", "Илгээлээ. Баярлалаа!": "Sent. Thank you!", "Илгээж чадсангүй.": "Couldn't send it."};
 let LANG="mn";try{LANG=localStorage.getItem("sug_lang")||((navigator.language||"").toLowerCase().startsWith("mn")?"mn":"en")}catch(_){LANG=(navigator.language||"").toLowerCase().startsWith("mn")?"mn":"en"}
 const T=s=>LANG==="en"&&EN[s]!==undefined?EN[s]:s;
-function applyStatic(){document.documentElement.lang=LANG;document.title=LANG==="en"?"Sug Bubble":"Сүгийн бөмбөлөг";
+function applyStatic(){document.documentElement.lang=LANG;document.title=LANG==="en"?"The Hidden World":"Далд ертөнц";
  $("world").setAttribute("aria-label",T("Далд ертөнц"));const L=document.querySelectorAll(".light");L[0].title=T("Гаднах гэрэл");L[1].title=T("Дотоод гэрэл");
  $("snd").setAttribute("aria-label",T("Дуу"));$("owl").textContent=T("Үүүү…");$("goOut").textContent=T("Гадагш гарах");$("goHome").textContent=T("Гэртээ буцах");
- $("send").textContent=T("Илгээх");$("input").placeholder=T("Бич…");$("input").setAttribute("aria-label",T("Бичих"));$("readTitle").textContent=T("Төөрсөн сүг");$("replyInput").placeholder=T("Хариу бич… (чиний сүг үүнтэй нийлнэ)");
+ $("send").textContent=T("Илгээх");$("input").placeholder=T("Бич…");$("input").setAttribute("aria-label",T("Бичих"));$("readTitle").textContent=T("Төөрсөн бодол");$("replyInput").placeholder=T("Хариу бич… (чиний үг үүнтэй нийлнэ)");
  $("replyInput").setAttribute("aria-label",T("Хариу"));document.querySelector("#replyForm .btn").textContent=T("Хариулах");$("closeCard").textContent=T("Хаах");
  $("lang").textContent=LANG==="en"?"МН":"EN";$("fbBtn").textContent=T("✎ санал");$("bookLink").textContent=T("📖 ном");$("fbTitle").textContent=T("Тоглоомд юу нэмэх, засах вэ?");$("fbInput").placeholder=T("Санаагаа бич…");$("fbSend").textContent=T("Илгээх");$("fbClose").textContent=T("Хаах")}
 applyStatic();
@@ -658,9 +658,9 @@ function setMode(m){
   $("actions").hidden=m==="wake";
   $("goOut").hidden=m!=="home";$("goHome").hidden=m!=="world";$("releaseMode").hidden=m!=="home";
   form.hidden=m==="world";
-  if(m==="wake"){whisper.textContent=T(WHISPERS[0]);note.textContent=T("Бичсэн үг чинь сүг болно. Хэрхэн бичсэн нь ч гэсэн.")}
+  if(m==="wake"){whisper.textContent=T(WHISPERS[0]);note.textContent=T("Бичсэн үг чинь биежинэ. Хэрхэн бичсэн нь ч гэсэн.")}
   if(m==="home"){whisper.textContent=T(WHISPERS[(me.writes)%WHISPERS.length]);note.textContent=T("Энд бичсэн зүйл зөвхөн чиний бөмбөлөгт үлдэнэ.");input.placeholder=T("Бич…")}
-  if(m==="world"){whisper.textContent=T("Төөрсөн сүг дээр дарж, сонсоорой.");note.textContent=T("Цэнхэр утас бүрийн цаана нэг хүн бий.")}
+  if(m==="world"){whisper.textContent=T("Төөрсөн бодол дээр дарж, сонсоорой.");note.textContent=T("Цэнхэр утас бүрийн цаана нэг хүн бий.")}
 }
 $("goOut").onclick=()=>{if(me.inner<20){toast(T("Дотоод гэрэл чинь хэтэрхий бүдэг байна. Эхлээд гэртээ нэг зүйл бүтээ."));return}setMode("world")};
 $("goHome").onclick=()=>setMode("home");
@@ -707,7 +707,7 @@ cv.addEventListener("click",e=>{
   const card=$("readCard");card.style.opacity=0;card.style.transition="opacity .9s";setTimeout(()=>card.style.opacity=1,650);
   reading=h.s;$("readText").textContent="“"+h.s.text+"”";
   const n=replies.filter(r=>r.sugId===h.s.id).length;
-  $("readMeta").textContent=(h.s.owner===me.id?T("Чиний сулласан бодол. "):"")+(n?n+T(" хүн энэ сүгтэй нийлсэн."):T("Одоохондоо хэн ч хариулаагүй."));
+  $("readMeta").textContent=(h.s.owner===me.id?T("Чиний сулласан бодол. "):"")+(n?n+T(" хүн энэ бодолтой нийлсэн."):T("Одоохондоо хэн ч хариулаагүй."));
   $("replyForm").hidden=h.s.owner===me.id;$("readCard").hidden=false;if(h.s.owner!==me.id)$("replyInput").focus();
 });
 $("closeCard").onclick=()=>{$("readCard").hidden=true;reading=null};
@@ -723,8 +723,8 @@ $("replyForm").addEventListener("submit",async e=>{
     const hues=(target.replyHues||[]).concat(g.hues.slice(0,1)).slice(-6);
     const np=[...new Set([...(target.parts||[]),...(g.parts||[])])].slice(0,9);
     await db.doc("sugs/"+target.id).update({replyHues:hues,replies:(target.replies||0)+1,parts:np});
-    if(g.dark){me.outer=clamp(me.outer-8,0,100);toast(T("Чиний сүг харанхуй байлаа. Буланд нэг хар сүг нэмэгдлээ."))}
-    else{me.outer=clamp(me.outer+10,0,100);me.inner=clamp(me.inner+3,0,100);toast(T("Чиний сүг тэр бодолтой нийллээ."))}
+    if(g.dark){me.outer=clamp(me.outer-8,0,100);toast(T("Чиний үг харанхуй байлаа. Буланд нэг хар дүрс нэмэгдлээ."))}
+    else{me.outer=clamp(me.outer+10,0,100);me.inner=clamp(me.inner+3,0,100);toast(T("Чиний үг тэр бодолтой нийллээ."))}
     save();lights();
   }catch(err){toast(T("Хариу хүрсэнгүй. Дахин оролдоорой."))}
 });
@@ -739,7 +739,7 @@ setInterval(()=>{
 function checkReturned(){
   if(!me.id)return;const mine=new Set(world.filter(s=>s.owner===me.id).map(s=>s.id));
   const got=replies.filter(r=>mine.has(r.sugId)&&r.from!==me.id&&!me.seenReplies[r.id]);
-  if(got.length){got.forEach(r=>me.seenReplies[r.id]=1);const good=got.filter(r=>!(r.g&&r.g.dark)).length;me.outer=clamp(me.outer+good*8,0,100);save();lights();toast(got.length===1?T("Чиний сулласан сүг буцаж ирэхдээ өөр болжээ. Хэн нэгэн сонссон."):got.length+T(" хүн чиний сүгийг сонсчээ."))}
+  if(got.length){got.forEach(r=>me.seenReplies[r.id]=1);const good=got.filter(r=>!(r.g&&r.g.dark)).length;me.outer=clamp(me.outer+good*8,0,100);save();lights();toast(got.length===1?T("Чиний сулласан бодол буцаж ирэхдээ өөр болжээ. Хэн нэгэн сонссон."):got.length+T(" хүн чиний бодлыг сонсчээ."))}
 }
 
 // ---------- connect shared world ----------
