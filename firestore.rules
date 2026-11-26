@@ -24,5 +24,14 @@ service cloud.firestore {
         && request.resource.data.text is string
         && request.resource.data.text.size() <= 600;
     }
+    match /notes/{id} {
+      allow read: if resource.data.approved == true;
+      allow create: if request.auth != null
+        && request.resource.data.approved == false
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 600
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 40;
+    }
   }
 }

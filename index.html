@@ -39,6 +39,15 @@ h2{font:600 34px var(--display);margin:0 0 14px}
 .play .door{aspect-ratio:1;border-radius:50%;background:url(door.jpg) center/cover;text-decoration:none;align-content:end;box-shadow:0 0 80px #c9a7ff33 inset,0 0 60px #7fb3ff22;max-width:360px;width:100%;justify-self:center;display:grid;place-items:center;font:italic 22px var(--display);color:var(--ink);text-shadow:0 2px 8px #000;text-align:center;padding:0 0 10%}
 .muted{color:var(--soft)}
 .author{max-width:680px}
+.jgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-top:18px;align-items:start}
+.jcard{background:var(--bg2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.jcard img{width:100%;height:auto;display:block}
+.jcard div{padding:12px 14px}.jcard h3{font:600 20px/1.2 var(--display);margin:0 0 6px}.jcard p{margin:0;font-size:15px;color:var(--soft);white-space:pre-line}.jcard time{font-size:13px;color:var(--soft)}
+.nform{display:grid;gap:10px;max-width:640px;margin-top:16px}
+.nform input,.nform textarea{background:rgba(10,8,20,.55);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:16px var(--body)}
+.nlist{display:grid;gap:14px;margin-top:26px;max-width:680px}
+.note{border-left:2px solid var(--accent);padding:4px 0 4px 14px}.note p{margin:0 0 4px;white-space:pre-line}.note span{color:var(--soft);font-size:14px}
+button.btn{border:0;cursor:pointer;font-family:var(--body)}
 footer{padding:32px 0 48px;color:var(--soft);font-size:14px;border-top:1px solid var(--line)}
 footer a{color:var(--soft)}
 .links{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}.soc{width:46px;height:46px;border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--ink)!important;transition:.2s}.soc svg{width:21px;height:21px;fill:currentColor}.soc:hover,.soc:focus-visible{color:var(--brand)!important;border-color:var(--brand);transform:translateY(-2px)}
@@ -73,6 +82,26 @@ footer a{color:var(--soft)}
   <a class="door" href="play.html" aria-label="Open the game"></a>
 </section>
 
+<section id="journal">
+  <h2 data-en="From the hidden world" data-mn="Далд ертөнцөөс">From the hidden world</h2>
+  <p class="muted" data-en="Paintings and small notes, as they are made." data-mn="Зураг, жижиг тэмдэглэлүүд, бүтээгдсэн дарааллаараа.">Paintings and small notes, as they are made.</p>
+  <div class="jgrid" id="jgrid"></div>
+</section>
+
+<section id="notes">
+  <h2 data-en="Readers' words" data-mn="Уншигчдын үг">Readers' words</h2>
+  <p class="muted" data-en="Read the book, or just stepped into the world? Leave a few words. They appear here after the author reads them." data-mn="Номыг уншсан уу, эсвэл ертөнцөд нь зүгээр л орж үзсэн үү? Хэдэн үг үлдээгээрэй. Зохиолч уншсаны дараа энд харагдана.">Read the book, or just stepped into the world? Leave a few words. They appear here after the author reads them.</p>
+  <form class="nform" id="nform">
+    <input id="nname" maxlength="40" autocomplete="off" data-ph-en="Your name (optional)" data-ph-mn="Нэр (заавал биш)" placeholder="Your name (optional)">
+    <textarea id="ntext" maxlength="600" rows="3" required data-ph-en="Your words…" data-ph-mn="Таны үг…" placeholder="Your words…"></textarea>
+    <div class="btns" style="margin-top:0"><button class="btn primary" type="submit" data-en="Send" data-mn="Илгээх">Send</button>
+    <a class="btn ghost" href="https://www.goodreads.com/book/show/263008941" target="_blank" rel="noopener" data-en="Review on Goodreads" data-mn="Goodreads-д review бичих">Review on Goodreads</a>
+    <a class="btn ghost" href="https://www.amazon.com/review/create-review?asin=B0HQ2Q1VJD" target="_blank" rel="noopener" data-en="Review on Amazon" data-mn="Amazon-д review бичих">Review on Amazon</a></div>
+    <p class="muted" id="nmsg" aria-live="polite"></p>
+  </form>
+  <div class="nlist" id="nlist"></div>
+</section>
+
 <section id="author">
   <div class="author">
     <h2 data-en="About the author" data-mn="Зохиолчийн тухай">About the author</h2>
@@ -105,8 +134,30 @@ mn:["Намрын нэгэн энгийн өглөө Дуулим сургуул
 let L="en";try{L=localStorage.getItem("site_lang")||((navigator.language||"").toLowerCase().startsWith("mn")?"mn":"en")}catch(_){}
 function apply(){document.documentElement.lang=L;document.querySelectorAll("[data-en]").forEach(e=>{const v=e.getAttribute("data-"+L);if(e.classList.contains("door"))e.textContent=v;else e.textContent=v});
 document.getElementById("blurb").innerHTML=BLURB[L].map(p=>"<p></p>").join("");[...document.querySelectorAll("#blurb p")].forEach((p,i)=>p.textContent=BLURB[L][i]);
-document.getElementById("lang").textContent=L==="en"?"МН":"EN";try{localStorage.setItem("site_lang",L);localStorage.setItem("sug_lang",L)}catch(_){}}
+document.querySelectorAll("[data-ph-en]").forEach(e=>e.placeholder=e.getAttribute("data-ph-"+L));if(window.renderJournal)renderJournal();document.getElementById("lang").textContent=L==="en"?"МН":"EN";try{localStorage.setItem("site_lang",L);localStorage.setItem("sug_lang",L)}catch(_){}}
 document.getElementById("lang").onclick=()=>{L=L==="en"?"mn":"en";apply()};apply();
+</script>
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+let JOURNAL=[];
+function renderJournal(){const g=document.getElementById("jgrid");if(!g)return;g.textContent="";
+ JOURNAL.forEach(j=>{const c=document.createElement("article");c.className="jcard";const im=document.createElement("img");im.src=j.image;im.alt=j.title;im.loading="lazy";
+  const d=document.createElement("div"),t=document.createElement("time"),h=document.createElement("h3"),p=document.createElement("p");
+  t.textContent=new Date(j.date+"T12:00:00").toLocaleDateString(L==="mn"?"mn-MN":"en-US",{month:"long",day:"numeric"});h.textContent=j.title;p.textContent=j.text;d.append(t,h,p);c.append(im,d);g.append(c)})}
+fetch("journal.json",{cache:"no-cache"}).then(r=>r.json()).then(j=>{JOURNAL=j.sort((a,b)=>b.date.localeCompare(a.date));renderJournal()}).catch(()=>{});
+(function(){const CFG=window.FIREBASE_CONFIG,form=document.getElementById("nform"),msg=document.getElementById("nmsg"),list=document.getElementById("nlist");
+ const say=(en,mn)=>{msg.textContent=L==="mn"?mn:en};
+ if(!CFG||!window.firebase){form.hidden=true;return}
+ firebase.initializeApp(CFG);const db=firebase.firestore();const ready=firebase.auth().signInAnonymously().catch(()=>null);
+ db.collection("notes").where("approved","==",true).limit(60).get().then(s=>{const n=s.docs.map(d=>d.data()).sort((a,b)=>b.ts-a.ts);list.textContent="";
+  n.forEach(x=>{const e=document.createElement("div");e.className="note";const p=document.createElement("p"),sp=document.createElement("span");p.textContent=String(x.text||"");sp.textContent="— "+(String(x.name||"").trim()||"a reader");e.append(p,sp);list.append(e)})}).catch(()=>{});
+ let busy=false;form.addEventListener("submit",async e=>{e.preventDefault();if(busy)return;const text=document.getElementById("ntext").value.trim(),name=document.getElementById("nname").value.trim();if(!text)return;busy=true;
+  try{await ready;await db.collection("notes").add({name:name.slice(0,40),text:text.slice(0,600),approved:false,lang:L,ts:Date.now()});form.reset();say("Thank you. Your words will appear here after the author reads them.","Баярлалаа. Зохиолч уншсаны дараа энд харагдана.")}
+  catch(err){say("Couldn't send it. Please try again.","Илгээж чадсангүй. Дахин оролдоорой.")}busy=false});
+})();
 </script>
 </body>
 </html>
