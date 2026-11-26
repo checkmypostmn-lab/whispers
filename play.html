@@ -1,4 +1,4 @@
-<title>Сүгийн бөмбөлөг</title>
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content=width=device-width,initial-scale=1,viewport-fit=cover></head><body><title>Сүгийн бөмбөлөг</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito:wght@400;600&display=swap">
@@ -742,6 +742,11 @@ function checkReturned(){
 }
 
 // ---------- connect shared world ----------
+// shared data is untrusted: rebuild a missing/odd genome from the text, drop what can't be drawn
+function fixSug(s){try{if(typeof s.text!=="string"||!s.owner)return null;s.text=s.text.slice(0,280);
+ const g=s.g;if(!g||!Array.isArray(g.hues)||typeof g.segs!=="number"||!g.hues.length){s.g=analyze(s.text,{cps:4,dels:0,keys:s.text.length,cv:0,pauses:0},{baseCps:4,handHue:270,traits:{O:50,A:50,N:50}});s.g.seed=hash(s.id||s.text)}
+ const ok=v=>typeof v!=="number"||(isFinite(v)&&Math.abs(v)<1e15);if(!Object.values(s.g).every(ok)||!s.g.hues.every(h=>typeof h==="number"&&isFinite(h)))return null;
+ if(!Array.isArray(s.replyHues)||!s.replyHues.every(h=>typeof h==="number"&&isFinite(h)))s.replyHues=[];if(s.parts&&!Array.isArray(s.parts))s.parts=[];return s}catch(e){return null}}
 async function connect(){
   if(!window.claude||!window.claude.use){return}
   try{
@@ -749,7 +754,7 @@ async function connect(){
     if(u&&u.id){const id=await u.id();if(id&&id!==me.id){me.seenReplies={};setHand(id)}}
     if(!d)return;db=d;
     const timer=setTimeout(()=>{if(!dbOk)toast(T("Хуваалцах ертөнц удаан ачаалж байна."))},10000);
-    db.collection("sugs").orderBy("ts","asc").limit(200).onSnapshot(snap=>{dbOk=true;clearTimeout(timer);world=snap.docs.map(d=>Object.assign({id:d.id},d.data()));checkReturned()},()=>{});
+    db.collection("sugs").orderBy("ts","asc").limit(200).onSnapshot(snap=>{dbOk=true;clearTimeout(timer);world=snap.docs.map(d=>Object.assign({id:d.id},d.data())).map(fixSug).filter(Boolean);checkReturned()},()=>{});
     db.collection("replies").orderBy("ts","asc").limit(400).onSnapshot(snap=>{replies=snap.docs.map(d=>Object.assign({id:d.id},d.data()));checkReturned()},()=>{});
   }catch(e){}
 }
