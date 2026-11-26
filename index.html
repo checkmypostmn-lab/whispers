@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whispers of the Hidden World</title>
+<meta name="description" content="A magical fairy tale from Mongolia, where unspoken thoughts take shape. Read the book, then step into the hidden world and make your own sug.">
+<meta property="og:title" content="Whispers of the Hidden World">
+<meta property="og:description" content="A magical fairy tale from Mongolia, where unspoken thoughts take shape.">
+<meta property="og:image" content="cover.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#120e22;--bg2:#1b1530;--ink:#ece6f6;--soft:#b9b0cc;--accent:#c9a7ff;--gold:#e8c987;--line:rgba(201,167,255,.22);--display:"Cormorant Garamond",Georgia,serif;--body:"Nunito",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--body)}
+body{background:radial-gradient(1200px 700px at 70% -10%,#3a2a66 0%,transparent 60%),radial-gradient(900px 600px at 0% 40%,#22305a 0%,transparent 60%),var(--bg)}
+a{color:var(--accent)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+nav{display:flex;justify-content:space-between;align-items:center;padding:16px 0}
+nav .brand{font:600 20px var(--display);letter-spacing:.02em;color:var(--ink);text-decoration:none}
+.lang{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:4px 12px;font:14px var(--body);cursor:pointer}
+.hero{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:48px;align-items:center;padding:32px 0 56px}
+.hero img{width:100%;height:auto;border-radius:6px;box-shadow:0 20px 60px #000c,0 0 0 1px var(--line)}
+h1{font:600 clamp(36px,6vw,58px)/1.05 var(--display);margin:0 0 12px}
+.tag{font:italic 500 22px var(--display);color:var(--gold);margin:0 0 20px}
+.blurb p{margin:0 0 14px;color:var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.btn{display:inline-block;text-decoration:none;border-radius:999px;padding:11px 20px;font-weight:600;font-size:15px}
+.btn.primary{background:var(--gold);color:#1b1530}
+.btn.ghost{border:1px solid var(--line);color:var(--ink)}
+section{padding:56px 0;border-top:1px solid var(--line)}
+h2{font:600 34px var(--display);margin:0 0 14px}
+.play{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.play .door{aspect-ratio:1;border-radius:50%;background:url(door.jpg) center/cover;text-decoration:none;align-content:end;box-shadow:0 0 80px #c9a7ff33 inset,0 0 60px #7fb3ff22;max-width:360px;width:100%;justify-self:center;display:grid;place-items:center;font:italic 22px var(--display);color:var(--ink);text-shadow:0 2px 8px #000;text-align:center;padding:0 0 10%}
+.muted{color:var(--soft)}
+.author{max-width:680px}
+footer{padding:32px 0 48px;color:var(--soft);font-size:14px;border-top:1px solid var(--line)}
+footer a{color:var(--soft)}
+.links{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:10px}
+@media (max-width:760px){.hero,.play{grid-template-columns:1fr;gap:28px}.hero img{max-width:260px;justify-self:center}.hero{text-align:left}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav><a class="brand" href="#">Whispers of the Hidden World</a><button class="lang" id="lang" type="button">МН</button></nav>
+
+<div class="hero">
+  <img src="cover.jpg" alt="Watercolor cover of Whispers of the Hidden World" width="640" height="1024">
+  <div>
+    <h1>Whispers of the Hidden World</h1>
+    <p class="tag" data-en="A magical fairy tale from Mongolia" data-mn="Монголоос ирсэн ид шидийн үлгэр">A magical fairy tale from Mongolia</p>
+    <div class="blurb" id="blurb"></div>
+    <div class="btns">
+      <a class="btn primary" href="https://www.amazon.com/dp/B0HQ2Q1VJD" target="_blank" rel="noopener" data-en="Kindle · Free on Kindle Unlimited" data-mn="Kindle · Kindle Unlimited-д үнэгүй">Kindle · Free on Kindle Unlimited</a>
+      <a class="btn ghost" href="https://www.amazon.com/dp/B0HRK44Z88" target="_blank" rel="noopener" data-en="Paperback" data-mn="Цаасан ном">Paperback</a>
+      <a class="btn ghost" href="https://www.goodreads.com/book/show/263008941" target="_blank" rel="noopener">Goodreads</a>
+    </div>
+  </div>
+</div>
+
+<section class="play" id="play">
+  <div>
+    <h2 data-en="What would your thoughts look like?" data-mn="Чиний бодол ямар дүрстэй байх бол?">What would your thoughts look like?</h2>
+    <p data-en="Step into a small bubble of the hidden world. Write a word, and watch it take shape. Release it, and someone you will never meet may find it." data-mn="Далд ертөнцийн жижиг бөмбөлөг рүү ор. Нэг үг бич, тэр хэрхэн биежихийг хар. Сулла, тэгвэл хэзээ ч уулзахгүй хэн нэгэн түүнийг олж магадгүй.">Step into a small bubble of the hidden world. Write a word, and watch it take shape. Release it, and someone you will never meet may find it.</p>
+    <p class="muted" data-en="An early version. It changes with what players ask for." data-mn="Эхний хувилбар. Тоглогчдын хүсэлтээр өөрчлөгдсөөр байна.">An early version. It changes with what players ask for.</p>
+    <div class="btns"><a class="btn primary" href="play.html" data-en="Make your sug" data-mn="Сүгээ бүтээ">Make your sug</a></div>
+  </div>
+  <a class="door" href="play.html" aria-label="Open the game"></a>
+</section>
+
+<section id="author">
+  <div class="author">
+    <h2 data-en="About the author" data-mn="Зохиолчийн тухай">About the author</h2>
+    <p data-en="Sainbileg D is a Mongolian writer and painter. Sainbileg writes poetry and fairy tales about the quiet things people carry inside: thoughts, words, and the shapes they take." data-mn="Сайнбилэг Д. бол монгол зохиолч, зураач. Хүний дотор нууж явдаг зүйлс буюу бодол, үг, тэдний авдаг дүрсийн тухай шүлэг, үлгэр бичдэг.">Sainbileg D is a Mongolian writer and painter. Sainbileg writes poetry and fairy tales about the quiet things people carry inside: thoughts, words, and the shapes they take.</p>
+    <p data-en="Whispers of the Hidden World began almost ten years ago in Mongolian. The watercolor cover was painted by the author." data-mn="Энэ ном бараг арван жилийн өмнө монгол хэлээр бичигдэж эхэлсэн. Усан будгаар зурсан хавтсыг зохиолч өөрөө зурсан.">Whispers of the Hidden World began almost ten years ago in Mongolian. The watercolor cover was painted by the author.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="links">
+    <a href="https://sainbilegd.substack.com" target="_blank" rel="noopener">Substack</a>
+    <a href="https://www.youtube.com/@whispersofthehiddenworld" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://podcasts.apple.com/us/podcast/in-silence-i-speak/id1817759616" target="_blank" rel="noopener">In Silence, I Speak (podcast)</a>
+  </div>
+  © 2026 Sainbileg D
+</footer>
+</div>
+<script>
+const BLURB={en:["One ordinary autumn morning, Duulim falls down the school stairs, and wakes up in the hidden world.","Here, the thoughts people carry become living things. Kindness glows like fireflies. Worry clings to a mother's shoulders like small grey bats. And every careless word Duulim has ever spoken has been following her, quietly growing.","To find her way home, Duulim must face what her words have made."],
+mn:["Намрын нэгэн энгийн өглөө Дуулим сургуулийн шатнаас унаад, далд ертөнцөд сэрнэ.","Энд хүмүүсийн тээж яваа бодол амьд биет болдог. Сайхан сэтгэл галт цох шиг гэрэлтэнэ. Санаа зовнил ээжийн мөрөн дээр жижиг саарал сарьсан багваахай шиг зууралдана. Дуулимын хэзээ нэгэн цагт хайхрамжгүй хэлсэн үг бүр түүнийг дагаж, чимээгүйхэн өссөөр иржээ.","Гэртээ буцах замаа олохын тулд Дуулим үгсийнхээ бүтээснийг нүүр тулан угтах ёстой."]};
+let L="en";try{L=localStorage.getItem("site_lang")||((navigator.language||"").toLowerCase().startsWith("mn")?"mn":"en")}catch(_){}
+function apply(){document.documentElement.lang=L;document.querySelectorAll("[data-en]").forEach(e=>{const v=e.getAttribute("data-"+L);if(e.classList.contains("door"))e.textContent=v;else e.textContent=v});
+document.getElementById("blurb").innerHTML=BLURB[L].map(p=>"<p></p>").join("");[...document.querySelectorAll("#blurb p")].forEach((p,i)=>p.textContent=BLURB[L][i]);
+document.getElementById("lang").textContent=L==="en"?"МН":"EN";try{localStorage.setItem("site_lang",L);localStorage.setItem("sug_lang",L)}catch(_){}}
+document.getElementById("lang").onclick=()=>{L=L==="en"?"mn":"en";apply()};apply();
+</script>
+</body>
+</html>

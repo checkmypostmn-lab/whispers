@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /sugs/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 280;
+      // others may only add reply colours / count / parts; the owner may also mark it home
+      allow update: if request.auth != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyHues','replies','parts','home'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['home']) || resource.data.owner == request.auth.uid);
+    }
+    match /replies/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 280;
+    }
+    match /feedback/{id} {
+      allow create: if request.auth != null
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 600;
+    }
+  }
+}

@@ -1,0 +1,760 @@
+<title>Сүгийн бөмбөлөг</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Nunito:wght@400;600&display=swap">
+<style>
+/* Layout: one full-screen canvas (the hidden world), quiet paper-like panels floating at the bottom. Single dark look by choice. */
+:root{
+  --night:#1b1530;      /* deep indigo-violet sky */
+  --ink:#ece6f6;        /* pale lilac text */
+  --mist:#a99cc6;       /* secondary text */
+  --paper:#efe4cf;      /* old paper for the writing box */
+  --paper-ink:#2c2340;  /* text on paper */
+  --gold:#f2c46d;       /* warm light */
+  --thread:#7fb4ff;     /* blue thread */
+  --display:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --body:"Nunito", "Segoe UI", system-ui, sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--night);color:var(--ink);font-family:var(--body);overflow:hidden}
+#world{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+.hud{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:center;gap:12px;pointer-events:none;z-index:3}
+.light{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mist);letter-spacing:.04em}
+.light .bar{width:min(120px,26vw);height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.light .fill{height:100%;width:0;background:linear-gradient(90deg,#c9a7ff,var(--gold));transition:width .8s}
+.light .ico{width:18px;height:18px;border-radius:50%;border:1px solid rgba(255,255,255,.5);background:radial-gradient(circle at 35% 35%,#fff8,#c9a7ff33)}
+.light .ico.crystal{border-radius:3px;transform:rotate(45deg) scale(.8);background:radial-gradient(circle,#ffe7a8,#f2c46d44)}
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:4;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none}
+.dock > *{pointer-events:auto}
+.whisper{font-family:var(--display);font-style:italic;font-size:clamp(20px,4.6vw,28px);text-align:center;text-wrap:balance;color:var(--ink);text-shadow:0 0 18px #9b7bff88;max-width:34ch;min-height:1.3em;transition:opacity .8s}
+.paper{width:min(640px,100%);background:var(--paper);color:var(--paper-ink);border-radius:4px 10px 6px 12px;box-shadow:0 8px 30px #0008;padding:10px 10px 10px 14px;display:flex;gap:8px;align-items:flex-end}
+.paper textarea{flex:1;min-width:0;border:0;background:transparent;font:16px/1.45 var(--body);color:var(--paper-ink);resize:none;outline:none;max-height:120px}
+.paper textarea::placeholder{color:#7a6c8f}
+.btn{font:600 14px var(--body);border:0;border-radius:999px;padding:9px 14px;cursor:pointer;background:var(--paper-ink);color:var(--paper);white-space:nowrap}
+.btn:focus-visible,.ghost:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn[disabled]{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ghost{font:600 13px var(--body);border:1px solid rgba(236,230,246,.35);background:rgba(27,21,48,.55);color:var(--ink);border-radius:999px;padding:8px 14px;cursor:pointer;backdrop-filter:blur(4px)}
+.card{position:fixed;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));background:rgba(27,21,48,.92);border:1px solid rgba(201,167,255,.3);border-radius:14px;padding:18px;box-shadow:0 10px 40px #000a;display:flex;flex-direction:column;gap:12px}
+.card h2{font:600 22px var(--display);margin:0}
+.card p{margin:0;line-height:1.5;color:var(--ink)}
+.card .meta{font-size:12px;color:var(--mist)}
+[hidden]{display:none!important}
+.card .paper{box-sizing:border-box}
+.thought{font:500 20px/1.4 var(--display);font-style:italic;overflow-wrap:anywhere}
+.owl{position:fixed;z-index:3;right:max(18px,env(safe-area-inset-right,0px));top:calc(54px + env(safe-area-inset-top,0px));font:italic 600 18px var(--display);color:var(--gold);opacity:0;transition:opacity 1s;pointer-events:none}
+.toast{position:fixed;z-index:6;left:50%;top:calc(60px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:rgba(27,21,48,.9);border:1px solid rgba(242,196,109,.4);padding:8px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .5s;pointer-events:none;max-width:calc(100% - 32px);text-align:center}
+.note{font-size:11px;color:var(--mist);text-align:center;max-width:52ch}
+@media (prefers-reduced-motion:reduce){.light .fill,.whisper,.owl,.toast{transition:none}}
+.lang{left:calc(50% + 52px)!important;transform:none!important}.fb{left:auto!important;right:calc(10px + env(safe-area-inset-right,0px));top:calc(44px + env(safe-area-inset-top,0px))!important;transform:none!important}
+#fbInput{width:100%;box-sizing:border-box;background:rgba(10,8,20,.6);color:var(--ink);border:1px solid rgba(201,167,255,.3);border-radius:8px;padding:8px;font:inherit;resize:vertical}
+.snd{position:fixed;z-index:4;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top,0px));background:rgba(27,21,48,.6);border:1px solid rgba(201,167,255,.3);color:var(--ink);border-radius:999px;font:14px var(--body,inherit);padding:4px 12px;cursor:pointer}
+</style>
+
+<canvas id="world" aria-label="Далд ертөнц"></canvas>
+
+<div class="hud" aria-live="polite">
+  <div class="light" title="Гаднах гэрэл"><span class="ico"></span><div class="bar"><div class="fill" id="outerFill"></div></div></div>
+  <div class="light" title="Дотоод гэрэл"><div class="bar"><div class="fill" id="innerFill"></div></div><span class="ico crystal"></span></div>
+</div>
+<button class="snd" id="snd" type="button" aria-label="Дуу">♪ дуу</button>
+<button class="snd lang" id="lang" type="button">EN</button>
+<button class="snd fb" id="fbBtn" type="button">✎ санал</button>
+<div class="owl" id="owl">Үүүү…</div>
+<div class="toast" id="toast"></div>
+
+<div class="dock">
+  <div class="whisper" id="whisper">Энд юу байгаасай гэж хүсэж байна?</div>
+  <div class="row" id="actions" hidden>
+    <button class="ghost" id="goOut">Гадагш гарах</button>
+    <button class="ghost" id="goHome" hidden>Гэртээ буцах</button>
+    <button class="ghost" id="releaseMode">Бодлоо сулла</button>
+  </div>
+  <form class="paper" id="form">
+    <textarea id="input" rows="1" maxlength="280" placeholder="Бич…" aria-label="Бичих"></textarea>
+    <button class="btn" id="send" type="submit">Илгээх</button>
+  </form>
+  <div class="note" id="note">Бичсэн үг чинь сүг болно. Хэрхэн бичсэн нь ч гэсэн.</div>
+</div>
+
+<div class="card" id="readCard" hidden role="dialog" aria-modal="true" aria-labelledby="readTitle">
+  <h2 id="readTitle">Төөрсөн сүг</h2>
+  <div class="thought" id="readText"></div>
+  <div class="meta" id="readMeta"></div>
+  <form class="paper" id="replyForm" style="width:100%">
+    <textarea id="replyInput" rows="2" maxlength="280" placeholder="Хариу бич… (чиний сүг үүнтэй нийлнэ)" aria-label="Хариу"></textarea>
+    <button class="btn" type="submit">Хариулах</button>
+  </form>
+  <div class="row"><button class="ghost" id="closeCard">Хаах</button></div>
+</div>
+
+<div class="card" id="fbCard" hidden role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+  <h2 id="fbTitle">Тоглоомд юу нэмэх, засах вэ?</h2>
+  <textarea id="fbInput" rows="4" maxlength="600" placeholder="Санаагаа бич…"></textarea>
+  <div class="row"><button class="btn" id="fbSend" type="button">Илгээх</button><button class="ghost" id="fbClose" type="button">Хаах</button></div>
+</div>
+
+<script src="firebase-config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* Website version: the game talks to Firebase instead of the Claude artifact database. */
+(function(){
+  var CFG=window.FIREBASE_CONFIG||null; /* filled from firebase-config.js */
+  if(!CFG||!window.firebase){return}
+  firebase.initializeApp(CFG);
+  var ready=firebase.auth().signInAnonymously().then(function(c){return c.user}).catch(function(){return null});
+  window.claude={use:function(n){return ready.then(function(u){
+    if(!u)return null;
+    if(n==="db")return firebase.firestore();
+    if(n==="user")return {id:function(){return Promise.resolve(u.uid)}};
+    return null})}};
+})();
+</script>
+
+<script>
+(()=>{
+"use strict";
+// ---------- tiny utils ----------
+const $=id=>document.getElementById(id);
+const EN={"Далд ертөнц": "Hidden World", "Гаднах гэрэл": "Outer light", "Дотоод гэрэл": "Inner light", "Дуу": "Sound", "♪ дуу": "♪ sound", "♪ дуугүй": "♪ muted", "Үүүү…": "Hooo…", "Энд юу байгаасай гэж хүсэж байна?": "What do you wish were here?", "Өнөөдөр чамд юу хамгийн их санагдав?": "What did you feel most today?", "Хэнд ч хэлээгүй нэг бодол байна уу?": "Is there a thought you've told no one?", "Чиний цонхоор юу харагддаг вэ?": "What do you see from your window?", "Сүүлд хэзээ инээсэн бэ?": "When did you last laugh?", "Гадагш гарах": "Go outside", "Гэртээ буцах": "Go home", "Бодлоо сулла": "Release a thought", "Болих": "Cancel", "Бич…": "Write…", "Бичих": "Write", "Илгээх": "Send", "Бичсэн үг чинь сүг болно. Хэрхэн бичсэн нь ч гэсэн.": "Your words become a sug. So does the way you write them.", "Төөрсөн сүг": "A wandering sug", "Хариу бич… (чиний сүг үүнтэй нийлнэ)": "Write back… (your sug will merge with it)", "Хариу": "Reply", "Хариулах": "Reply", "Хаах": "Close", "Одоохондоо нам гүм байна. Анхны бодлыг чи сулла.": "It's quiet for now. Release the first thought.", "Хуваалцах ертөнцөд холбогдож байна…": "Connecting to the shared world…", "Сулласан бодол чинь утсаараа гэртээ буцаж ирлээ.": "Your released thought followed its thread back home.", "Энд бичсэн зүйл зөвхөн чиний бөмбөлөгт үлдэнэ.": "What you write here stays only in your bubble.", "Төөрсөн сүг дээр дарж, сонсоорой.": "Tap a wandering sug and listen.", "Цэнхэр утас бүрийн цаана нэг хүн бий.": "Behind every blue thread is a person.", "Дотоод гэрэл чинь хэтэрхий бүдэг байна. Эхлээд гэртээ нэг зүйл бүтээ.": "Your inner light is too dim. Make something at home first.", "Энэ бодол чинь ертөнцөөр төөрнө. Хэн нэгэн олж сонсож магад.": "This thought will wander the world. Someone may find it and listen.", "Сулласан бодол нэргүйгээр бусдад харагдана. Хувийн мэдээлэл бүү бич.": "Released thoughts are seen by others without your name. Don't write personal details.", "Сулласан бодол…": "A thought to release…", "Бодол чинь цэнхэр утсаа чирсээр ертөнц рүү гарлаа.": "Your thought went out into the world, trailing its blue thread.", "Сулалж чадсангүй. Дахин оролдоорой.": "Couldn't release it. Please try again.", "Хана чинь туналлаа. Гадагш гарч болно.": "Your walls have cleared. You can go outside now.", "Бөмбөлөг дотор чинь шинэ зүйл биежлээ.": "Something new took shape inside your bubble.", "Хана нь хаалттай. Дотор нь юу байгааг гаднаас харахгүй.": "The walls are closed. You can't see inside from out here.", "Чиний сулласан бодол. ": "Your released thought. ", " хүн энэ сүгтэй нийлсэн.": " people merged with this sug.", "Одоохондоо хэн ч хариулаагүй.": "No one has answered yet.", "Чиний сүг харанхуй байлаа. Буланд нэг хар сүг нэмэгдлээ.": "Your sug was dark. A dark sug joined the corner.", "Чиний сүг тэр бодолтой нийллээ.": "Your sug merged with that thought.", "Хариу хүрсэнгүй. Дахин оролдоорой.": "Your reply didn't arrive. Please try again.", "Чиний сулласан сүг буцаж ирэхдээ өөр болжээ. Хэн нэгэн сонссон.": "Your released sug came back changed. Someone listened.", " хүн чиний сүгийг сонсчээ.": " people listened to your sug.", "Хуваалцах ертөнц удаан ачаалж байна.": "The shared world is slow to load.", "✎ санал": "✎ idea", "Тоглоомд юу нэмэх, засах вэ?": "What should the game add or change?", "Санаагаа бич…": "Write your idea…", "Илгээлээ. Баярлалаа!": "Sent. Thank you!", "Илгээж чадсангүй.": "Couldn't send it."};
+let LANG="mn";try{LANG=localStorage.getItem("sug_lang")||((navigator.language||"").toLowerCase().startsWith("mn")?"mn":"en")}catch(_){LANG=(navigator.language||"").toLowerCase().startsWith("mn")?"mn":"en"}
+const T=s=>LANG==="en"&&EN[s]!==undefined?EN[s]:s;
+function applyStatic(){document.documentElement.lang=LANG;document.title=LANG==="en"?"Sug Bubble":"Сүгийн бөмбөлөг";
+ $("world").setAttribute("aria-label",T("Далд ертөнц"));const L=document.querySelectorAll(".light");L[0].title=T("Гаднах гэрэл");L[1].title=T("Дотоод гэрэл");
+ $("snd").setAttribute("aria-label",T("Дуу"));$("owl").textContent=T("Үүүү…");$("goOut").textContent=T("Гадагш гарах");$("goHome").textContent=T("Гэртээ буцах");
+ $("send").textContent=T("Илгээх");$("input").placeholder=T("Бич…");$("input").setAttribute("aria-label",T("Бичих"));$("readTitle").textContent=T("Төөрсөн сүг");$("replyInput").placeholder=T("Хариу бич… (чиний сүг үүнтэй нийлнэ)");
+ $("replyInput").setAttribute("aria-label",T("Хариу"));document.querySelector("#replyForm .btn").textContent=T("Хариулах");$("closeCard").textContent=T("Хаах");
+ $("lang").textContent=LANG==="en"?"МН":"EN";$("fbBtn").textContent=T("✎ санал");$("fbTitle").textContent=T("Тоглоомд юу нэмэх, засах вэ?");$("fbInput").placeholder=T("Санаагаа бич…");$("fbSend").textContent=T("Илгээх");$("fbClose").textContent=T("Хаах")}
+applyStatic();
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+function hash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){let s=seed||1;return()=>{s=Math.imul(s^(s>>>15),2246822507);s=Math.imul(s^(s>>>13),3266489909);return((s^=s>>>16)>>>0)/4294967296}}
+const store={get(k,d){try{const v=localStorage.getItem("sug_"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("sug_"+k,JSON.stringify(v))}catch(e){}}};
+const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------- lexicon (stems; Mongolian + a little English) ----------
+// emotion keys: kind, joy, hope, curious, fear, sad, lonely, anger, envy
+const LEX={
+kind:["хайр","хайрт","хайрла","энэр","өрөвд","баярлалаа","баярлах","талархал","талархаж","дулаан","эелдэг","зөөлөн","тэвр","үнс","аврах","тусал","туслах","дэмж","хамгаал","сайхан сэтгэл","найз","нөхөр","ээж","аав","эмээ","өвөө","ах","эгч","дүү","гэр бүл","хүүхэд","өхөөрдөм","love","kind","thank","hug","care","friend","dear","gentle","warm","help"],
+joy:["баяр","баясг","жаргал","инээ","инээд","хөгжил","гоё","гайхалтай","сайхан","аз ","азтай","хөөрх","тоглох","наадам","бүжиг","дуу","нар","гэрэл","гэрэлт","цэцэг","happy","joy","fun","laugh","smile","great","beautiful","light","sun"],
+hope:["найдв","итгэ","мөрөөд","хүс","ирээдүй","эхл","шинэ","өглөө","хавар","болно","чадна","чадах","тэмүүл","зорил","hope","dream","wish","believe","tomorrow","new","can"],
+curious:["сонин","сониуч","яагаад","юу ","хэн ","хаана","хэзээ","яаж","нууц","далд","гайх","мэдэхийг","асуу","why","what","how","secret","wonder","curious","hidden"],
+fear:["ай","аймаар","айдас","айж","сандр","түгш","санаа зов","эмээ ","харанхуй","чичир","аюул","үхэл","үх","шөнө","сүүдэр","мангас","хар дарсан","scared","afraid","fear","dark","night","anxious","worry","nightmare"],
+sad:["гуни","гунигтай","уйл","нулимс","өвд","зовл","шаналал","хэцүү","ядар","ядарсан","алдсан","алдах","санах","санаж","харамс","гомдо","гомдол","уйтгар","хүнд","sad","cry","tears","hurt","pain","miss","tired","lost","heavy"],
+lonely:["ганцаар","ганцаардал","ганцхан","хаягд","мартагд","хэн ч","хоосон","чимээгүй","алс","холд","lonely","alone","nobody","empty","forgotten"],
+anger:["уур","уурла","уурлаж","үзэн яд","ядар ","муу","тэнэг","новш","хар ","хашгир","зодо","цохи","дайр","хорон","ичгүүргүй","залхаж","залхсан","angry","hate","stupid","idiot","mad","shut up","kill"],
+envy:["атаа","атаарх","жөтөө","хорсо","хорсол","харамла","jealous","envy","unfair"]
+};
+const NEG=["биш","үгүй","битгий","бүү","огт","not","don't","dont","no","never"];
+const INT=["маш","их","үнэхээр","тун","дэндүү","хэт","very","so","really","too"];
+const SELF=["би","миний","надад","намайг","надтай","минь","өөрөө","i","me","my","myself","i'm","im"];
+const YOU=["чи","чиний","чамд","чамайг","чамтай","та","таны","танд","тантай","you","your"];
+const WE=["бид","бидний","бидэнд","биднийг","хамтдаа","we","us","our","together"];
+const POS=["kind","joy","hope","curious"],NEGE=["fear","sad","lonely","anger","envy"];
+const HUE={kind:38,joy:50,hope:165,curious:192,fear:225,sad:255,lonely:280,anger:355,envy:95};
+const NOUNS={"цонх":"window","мод":"tree","далай":"sea","цай":"cup","гэр":"house","ном":"book","од":"star","сар":"moon","нар":"sun","цэцэг":"flower","бороо":"rain","цас":"snow","муур":"cat","нохой":"dog","шувуу":"bird","уул":"hill","гол":"river","зураг":"frame","дэнлүү":"lamp","лаа":"lamp","савлуур":"swing","window":"window","tree":"tree","sea":"sea","tea":"cup","home":"house","book":"book","star":"star","moon":"moon","flower":"flower","rain":"rain","snow":"snow","cat":"cat","dog":"dog","bird":"bird","lamp":"lamp"};
+
+function tokenize(t){return t.toLowerCase().replace(/[“”"«»()\[\]]/g," ").split(/[\s,.;:!?…]+/).filter(Boolean)}
+
+// ---------- typing signals ----------
+function makeTyping(el){
+  const st={start:0,last:0,keys:0,dels:0,gaps:[],maxPause:0,prevLen:0};
+  function reset(){st.start=0;st.last=0;st.keys=0;st.dels=0;st.gaps=[];st.maxPause=0;st.prevLen=el.value.length}
+  el.addEventListener("input",()=>{
+    const now=performance.now(),len=el.value.length;
+    if(!st.start)st.start=now;
+    if(st.last){const g=now-st.last;st.gaps.push(g);if(g>st.maxPause)st.maxPause=g}
+    if(len<st.prevLen)st.dels+=st.prevLen-len;else st.keys+=len-st.prevLen;
+    st.prevLen=len;st.last=now;
+    el.style.height="auto";el.style.height=Math.min(el.scrollHeight,120)+"px";
+  });
+  function read(){
+    const dur=Math.max(300,(st.last-st.start)||300);
+    const gaps=st.gaps.filter(g=>g<4000);
+    const mean=gaps.length?gaps.reduce((a,b)=>a+b,0)/gaps.length:200;
+    const sd=gaps.length>1?Math.sqrt(gaps.reduce((a,b)=>a+(b-mean)**2,0)/gaps.length):0;
+    const cps=st.keys/(dur/1000);
+    return{cps,cv:mean?sd/mean:0,pauses:st.gaps.filter(g=>g>1500).length,maxPause:st.maxPause,dels:st.dels,keys:st.keys};
+  }
+  return{reset,read};
+}
+
+// ---------- analysis: text + typing + who you are -> sug genome ----------
+
+// naming a part gives it form (book, ch.4)
+const PARTS=[[/^толгой/,"head"],[/^үс(ээ|ийг|тэй|эн|нүүд)?$/,"hair"],[/^нүд/,"eyes"],[/^ам(аа|ыг|тай|ан)?$/,"mouth"],[/^гар(аа|ыг|тай|ууд|т|аараа)?$/,"arms"],[/^хөл(өө|ийг|тэй|үүд|д)?$/,"legs"],[/^далавч/,"wings"],[/^сүүл(ээ|ийг|тэй)?$/,"tail"],[/^зүрх/,"heart"],
+ [/^heads?$/,"head"],[/^hair$/,"hair"],[/^eyes?$/,"eyes"],[/^mouth$/,"mouth"],[/^(arms?|hands?)$/,"arms"],[/^(legs?|feet|foot)$/,"legs"],[/^wings?$/,"wings"],[/^tail$/,"tail"],[/^heart$/,"heart"]];
+function partsOf(text){const w=text.toLowerCase().split(/[^\p{L}]+/u).filter(Boolean),o=new Set();w.forEach(x=>PARTS.forEach(([re,k])=>{if(re.test(x))o.add(k)}));return[...o]}
+function analyze(text,typing,me){
+  const words=tokenize(text),raw=" "+text.toLowerCase()+" ";
+  const emo={};for(const k in LEX)emo[k]=0;
+  words.forEach((w,i)=>{
+    let mult=1;const prev=words[i-1],next=words[i+1];
+    if(prev&&INT.includes(prev))mult*=1.6;
+    const negated=(prev&&NEG.includes(prev))||(next&&NEG.includes(next));
+    for(const k in LEX){
+      if(LEX[k].some(s=>s.includes(" ")?false:(w.startsWith(s)||w===s.trim()))){
+        if(negated){ if(POS.includes(k))emo.sad+=0.8*mult; else emo[k]+=0.3*mult; }
+        else emo[k]+=mult;
+      }
+    }
+  });
+  for(const k in LEX)LEX[k].forEach(s=>{if(s.includes(" ")&&raw.includes(s))emo[k]+=1});
+  const excl=(text.match(/!/g)||[]).length, ques=(text.match(/\?/g)||[]).length, ell=(text.match(/\.\.\.|…/g)||[]).length;
+  const caps=/[A-ZА-ЯӨҮЁ]{3,}/.test(text);
+  const emoji=(text.match(/\p{Extended_Pictographic}/gu)||[]);
+  emoji.forEach(e=>{if("❤💜💛🧡💙🥰😊🤗🙏".includes(e))emo.kind+=1;else if("😂😄😁🎉✨🌞".includes(e))emo.joy+=1;else if("😢😭💔🥺".includes(e))emo.sad+=1;else if("😡🤬💢".includes(e))emo.anger+=1;else if("😨😱👻🌑".includes(e))emo.fear+=1});
+  if(excl&&emo.anger)emo.anger*=1+excl*.3;
+  if(caps){emo.anger+=0.5}
+  const self=words.filter(w=>SELF.includes(w)).length, you=words.filter(w=>YOU.includes(w)).length, we=words.filter(w=>WE.includes(w)).length;
+  const past=words.filter(w=>/(сан|сэн|сон|сөн|лаа|лээ|лоо|лөө|жээ|чээ|ed)$/.test(w)).length;
+  const fut=words.filter(w=>/(на|нэ|но|нө|х болно|will|tomorrow)$/.test(w)||w==="маргааш"||w==="will").length;
+  const uniq=new Set(words).size, richness=words.length?uniq/words.length:1;
+  const rare=words.filter(w=>w.length>=9).length;
+  const commas=(text.match(/,/g)||[]).length, sentences=Math.max(1,(text.match(/[.!?…]+/g)||[]).length);
+  const objects=[...new Set(words.map(w=>{for(const n in NOUNS)if(w.startsWith(n))return NOUNS[n];return null}).filter(Boolean))];
+  // typing relative to this person's own usual pace
+  const base=me.baseCps||typing.cps||4;
+  const speedRatio=clamp(typing.cps/(base||1),0.4,2.2);
+  me.baseCps=me.baseCps?lerp(me.baseCps,typing.cps||me.baseCps,0.2):(typing.cps||4);
+  const delRatio=clamp(typing.dels/Math.max(8,typing.keys),0,1.5);
+  const pos=POS.reduce((a,k)=>a+emo[k],0), neg=NEGE.reduce((a,k)=>a+emo[k],0);
+  const total=pos+neg;
+  const intensity=clamp(0.35+total*0.18+excl*0.12+(caps?0.2:0),0.3,1.6);
+  // palette: top emotions; else the writer's own hand hue
+  const ranked=Object.entries(emo).filter(e=>e[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const hues=ranked.length?ranked.map(e=>HUE[e[0]]):[me.handHue];
+  return{
+    v:1,hues,ranked:ranked.map(e=>e[0]),intensity,
+    dark:neg>pos&&neg>0, pos,neg,
+    segs:clamp(Math.round(words.length/2.2)+commas,1,10),
+    question:ques>0, excl, ell, caps,
+    spikes:clamp(Math.round(emo.anger*3+emo.envy*2+(me.traits.A<40?3:0)+excl),0,14),
+    eyes:emo.fear>0?1.6:emo.sad>0?0.8:1,
+    self,you,we,past:past>fut&&past>0,future:fut>past&&fut>0,
+    richness,rare,
+    speed:speedRatio, jitter:clamp(typing.cv,0,1.6), stops:clamp(typing.pauses,0,6), ghost:delRatio,
+    hand:me.hand, handHue:me.handHue, objects,
+    len:words.length, sentences, parts:partsOf(text)
+  };
+}
+
+// ---------- traits (hidden, 0-100), drift slowly from behaviour ----------
+function updateTraits(me,g){
+  const a=0.15;
+  const O=50+(g.richness-0.7)*90+(g.question?10:0)+g.rare*4+(g.ranked.includes("curious")?8:0);
+  const A=50+(g.pos-g.neg)*12-(g.excl&&g.neg?8:0)+(g.you&&g.pos>g.neg?6:0);
+  const N=40+g.ghost*45+g.stops*5+(g.ranked.includes("fear")||g.ranked.includes("sad")?12:0)-(g.ranked.includes("joy")?6:0);
+  me.traits.O=clamp(lerp(me.traits.O,O,a),0,100);
+  me.traits.A=clamp(lerp(me.traits.A,A,a),0,100);
+  me.traits.N=clamp(lerp(me.traits.N,N,a),0,100);
+}
+
+// ---------- state ----------
+const me=store.get("me",null)||{id:null,hand:0,handHue:270,traits:{O:50,A:50,N:50},inner:8,outer:10,baseCps:0,stage:"home",writes:0,seenReplies:{}};
+const inner=store.get("inner",[]); // private inner-world sugs + objects (this browser only)
+function save(){store.set("me",me);store.set("inner",inner.slice(-24))}
+function setHand(id){me.id=id;const h=hash(id);me.hand=h%4;me.handHue=200+(h%120);save()}
+if(!me.id)setHand("local-"+Math.random().toString(36).slice(2));
+
+let mode=me.writes>=2?"home":"wake"; // wake -> home -> world ; release is a sub-mode of home
+let releasing=false;
+let world=[];      // released sugs from everyone
+let replies=[];    // replies from everyone
+let db=null, dbOk=false;
+
+// ---------- canvas ----------
+const cv=$("world"),cx=cv.getContext("2d");
+let W=0,H=0,DPR=1;
+function resize(){DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener("resize",resize);resize();
+const bg=new Image();bg.src="bg.jpg";
+
+function hsl(h,s,l,a){return`hsla(${h},${s}%,${l}%,${a})`}
+
+function _unusedDust(g,n){let d=DUST.get(g);if(d&&d.n===n)return d;const R=rng((g.seed||1)+31);const cnt=Math.round(50+n*30+(g.richness||0)*20);const ps=[];for(let k=0;k<cnt;k++)ps.push({u:R(),a:R()*6.283,d:Math.sqrt(R()),hi:R(),hj:(R()-.5)*56,sz:R()<.07?2.4+R()*1.4:.5+R()*1.3,tw:R()*6.283,sp:.6+R()*.8});d={n,ps};DUST.set(g,d);return d}
+
+// ---------- stirring: mouse / finger moves the colour like water ----------
+const stirs=[];let ptr=null,NOW=0,ENERGY=0;
+addEventListener("pointermove",e=>{if(mode==="world"&&typeof ptrs!=="undefined"&&ptrs.size){ptr={x:e.clientX,y:e.clientY};return}const x=e.clientX,y=e.clientY,n=performance.now()/1000;if(ptr&&(e.pointerType==="mouse"||e.buttons)){const dx=x-ptr.x,dy=y-ptr.y;if(Math.hypot(dx,dy)>1.5){stirs.push({x,y,vx:clamp(dx,-60,60),vy:clamp(dy,-60,60),t:n});if(stirs.length>48)stirs.shift()}}ptr={x,y}},{passive:true});
+addEventListener("pointerdown",e=>{ptr={x:e.clientX,y:e.clientY};stirs.push({x:e.clientX,y:e.clientY,vx:0,vy:0,t:performance.now()/1000,burst:1});if(stirs.length>48)stirs.shift()},{passive:true});
+let VT={z:1,ox:0,oy:0};
+function field(x0,y0){const x=x0*VT.z+VT.ox,y=y0*VT.z+VT.oy;let ox=0,oy=0;for(const s of stirs){const age=NOW-s.t;if(age>2.6||age<0)continue;const dx=x-s.x,dy=y-s.y,d2=dx*dx+dy*dy;if(d2>90000)continue;const d=Math.sqrt(d2)+1,f=Math.exp(-d2/20000)*Math.exp(-age*1.5),sp=Math.min(1,Math.hypot(s.vx,s.vy)/18),sw=Math.sin(age*2.2);
+  ox+=(s.vx*1.4+(-dy/d)*34*sp*sw+(s.burst?dx/d*55:0))*f;oy+=(s.vy*1.4+(dx/d)*34*sp*sw+(s.burst?dy/d*55:0))*f}
+  const m=Math.hypot(ox,oy);if(m>70){ox*=70/m;oy*=70/m}return[ox/VT.z,oy/VT.z]}
+function stirTick(){NOW=performance.now()/1000;while(stirs.length&&NOW-stirs[0].t>2.6)stirs.shift();let e=0;for(const s of stirs){e+=Math.exp(-(NOW-s.t)*1.5)*(Math.min(1,Math.hypot(s.vx,s.vy)/18)+(s.burst?1.5:0))}ENERGY=lerp(ENERGY,Math.min(1.6,e*.12),.15)}
+function drawTrail(t){const tr=stirs.filter(s=>NOW-s.t<1.1&&!s.burst);if(tr.length<4)return;const P=smooth(tr.map(s=>[s.x,s.y]).reverse(),3);const h=(t*40)%360;flow(P,{w:9,hues:[h,(h+70)%360,(h+150)%360,(h+230)%360],t,seed:3,layers:4,taper:"tail",wave:40,amp:.8,a:.7,nostir:true})}
+
+// ---------- streams: everything is drawn as layered flowing colour, never a line ----------
+function Rec(){const P=[];let cur=null;const add=(x,y)=>{if(!cur){cur=[];P.push(cur)}cur.push([x,y])};
+ const r={P,beginPath(){},moveTo(x,y){cur=[[x,y]];P.push(cur)},
+ lineTo(x,y){if(!cur){r.moveTo(x,y);return}const p=cur[cur.length-1],n=Math.max(1,Math.ceil(Math.hypot(x-p[0],y-p[1])/4));for(let i=1;i<=n;i++)cur.push([lerp(p[0],x,i/n),lerp(p[1],y,i/n)])},
+ ellipse(x,y,rx,ry,rot,a0,a1){a1=Math.min(a1,a0+6.2832);const sx=x+Math.cos(a0)*rx,sy=y+Math.sin(a0)*ry;cur?r.lineTo(sx,sy):r.moveTo(sx,sy);const n=Math.max(10,Math.ceil(Math.abs(a1-a0)*Math.max(rx,ry)/4));for(let i=1;i<=n;i++){const a=a0+(a1-a0)*i/n;cur.push([x+Math.cos(a)*rx,y+Math.sin(a)*ry])}},
+ arc(x,y,rr,a0,a1){r.ellipse(x,y,rr,rr,0,a0,a1)},
+ quadraticCurveTo(c1x,c1y,x,y){if(!cur)r.moveTo(c1x,c1y);const p=cur[cur.length-1];for(let i=1;i<=14;i++){const k=i/14,m=1-k;cur.push([m*m*p[0]+2*m*k*c1x+k*k*x,m*m*p[1]+2*m*k*c1y+k*k*y])}},
+ bezierCurveTo(a,b,c,d,x,y){if(!cur)r.moveTo(a,b);const p=cur[cur.length-1];for(let i=1;i<=20;i++){const k=i/20,m=1-k;cur.push([m*m*m*p[0]+3*m*m*k*a+3*m*k*k*c+k*k*k*x,m*m*m*p[1]+3*m*m*k*b+3*m*k*k*d+k*k*k*y])}},
+ rect(x,y,w,h){r.moveTo(x,y);r.lineTo(x+w,y);r.lineTo(x+w,y+h);r.lineTo(x,y+h);r.lineTo(x,y)},
+ closePath(){if(cur&&cur.length){const a=cur[0];r.lineTo(a[0],a[1])}}};return r}
+function smooth(P,it){for(let k=0;k<it;k++){const Q=[P[0]];for(let i=1;i<P.length-1;i++)Q.push([(P[i-1][0]+2*P[i][0]+P[i+1][0])/4,(P[i-1][1]+2*P[i][1]+P[i+1][1])/4]);Q.push(P[P.length-1]);P=Q}return P}
+function even(P,step,max){let tot=0;for(let i=1;i<P.length;i++)tot+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);const n=clamp(Math.ceil(tot/step),2,max);const o=[P[0]];let seg=1,acc=0,prev=P[0];for(let k=1;k<n;k++){const target=tot*k/n;while(seg<P.length){const d=Math.hypot(P[seg][0]-prev[0],P[seg][1]-prev[1]);if(acc+d>=target){const f=(target-acc)/(d||1);prev=[lerp(prev[0],P[seg][0],f),lerp(prev[1],P[seg][1],f)];acc=target;break}acc+=d;prev=P[seg];seg++}o.push(prev)}o.push(P[P.length-1]);return o}
+function rs(P,max){if(P.length<=max)return P;const o=[];for(let i=0;i<max;i++)o.push(P[Math.round(i*(P.length-1)/(max-1))]);return o}
+// o: w (half width), hues, t, a (alpha), seed, layers, amp, dark, taper ("both"|"tail"|"none"), wave (px per wave), speed
+function flow(P,o){
+  P=rs(P,o.max||70);if(P.length<2)return;if(stirs.length&&!o.nostir){P=P.map(q=>{const d=field(q[0],q[1]);return[q[0]+d[0],q[1]+d[1]]});P=smooth(P,2)}P=even(P,Math.max(3,(o.wave||60)/9),160);const N=P.length;
+  const closed=Math.hypot(P[0][0]-P[N-1][0],P[0][1]-P[N-1][1])<3,taper=o.taper||(closed?"none":"both");
+  const S=[0];for(let i=1;i<N;i++)S.push(S[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));const tot=S[N-1]||1;
+  const R=rng(o.seed||1),hs=o.hues&&o.hues.length?o.hues:[270],lay=o.layers||4,A=o.a==null?1:o.a,dk=!!o.dark;
+  cx.save();cx.globalCompositeOperation=dk?"source-over":"lighter";
+  for(let k=0;k<lay;k++){
+    const h=hs[k%hs.length]+(R()-.5)*(k<hs.length?12:50),ph=R()*6.283,fq=(.6+R()*1.2)*6.283/(o.wave||60),amp=(o.amp==null?.7:o.amp)*(.4+R()*.8)*(1+ENERGY*.8),wid=.3+R()*.55,fl=(.8+R()*1.4)*(o.speed||1)*(1+ENERGY*1.5);
+    const Lt=[],Rt=[];const fq2=closed?Math.max(1,Math.round(tot*fq/6.2832))*6.2832/tot:fq;
+    for(let i=0;i<N;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(N-1,i+1)];let nx=-(b[1]-a[1]),ny=b[0]-a[0];const nl=Math.hypot(nx,ny)||1;nx/=nl;ny/=nl;const u=S[i]/tot;
+      const tp=taper==="none"?1:taper==="tail"?Math.pow(Math.max(0,1-u),.7):Math.sqrt(clamp(Math.min(u,1-u)/.2,0,1));
+      const off=Math.sin(o.t*fl-S[i]*fq2+ph)*o.w*amp,w=o.w*wid*tp+.25;
+      Lt.push([P[i][0]+nx*(off+w),P[i][1]+ny*(off+w)]);Rt.push([P[i][0]+nx*(off-w),P[i][1]+ny*(off-w)])}
+    for(const[ww,al,lt]of[[1,dk?.28:.11,58],[.4,dk?.34:.17,70]]){
+      cx.beginPath();for(let i=0;i<N;i++){const p=Lt[i],c=Rt[i],mx=(p[0]+c[0])/2,my=(p[1]+c[1])/2,x=mx+(p[0]-mx)*ww,y=my+(p[1]-my)*ww;i?cx.lineTo(x,y):cx.moveTo(x,y)}
+      for(let i=N-1;i>=0;i--){const p=Lt[i],c=Rt[i],mx=(p[0]+c[0])/2,my=(p[1]+c[1])/2;cx.lineTo(mx+(c[0]-mx)*ww,my+(c[1]-my)*ww)}
+      cx.closePath();cx.fillStyle=hsl(h,dk?30:82,dk?26:lt,al*A);cx.fill()}
+  }
+  cx.restore();
+}
+const arcP=(x,y,r,a0,a1)=>{const q=Rec();q.arc(x,y,r,a0,a1);return q.P[0]};
+const quadP=(x0,y0,c1,c2,x,y)=>{const q=Rec();q.moveTo(x0,y0);q.quadraticCurveTo(c1,c2,x,y);return q.P[0]};
+
+// draw one sug from its genome at x,y; t = time; scale
+function drawSug(g,x,y,t,scale,opts={}){
+  const R=rng((g.seed||1)+7);
+  const s=scale*(0.7+g.intensity*0.5);
+  const hues=g.hues&&g.hues.length?g.hues:[g.handHue||270];
+  const sat=g.dark?35:70, lit=g.dark?28:62;
+  const mixHue=opts.mixHues&&opts.mixHues.length?opts.mixHues:null;
+  // body path: head leads, segments trail on a wave (eel vs blob by hand)
+  const pts=[];const n=Math.max(3,g.segs+1);
+  const wave=g.hand===1?1.4:g.hand===3?0.4:0.9;
+  for(let i=0;i<n;i++){
+    const ph=t*1.8*g.speed - i*0.7;
+    pts.push([x - i*13*s*(g.hand===1?1.3:0.85), y + Math.sin(ph)*6*s*wave + (g.jitter*(R()-.5)*3*s)]);
+  }
+  if(stirs.length)for(const q of pts){const d=field(q[0],q[1]);q[0]+=d[0];q[1]+=d[1]}
+  // ghost: unsaid (deleted) words trail as a faint shadow
+  if(g.ghost>0.05){
+    cx.save();cx.globalAlpha=clamp(g.ghost*0.45,0.08,0.4);
+    for(let i=n-1;i>=0;i--){const p=pts[i];cx.fillStyle="rgba(10,6,20,1)";cx.beginPath();cx.arc(p[0]-14*s,p[1]+8*s,(10-i*.6)*s,0,7);cx.fill()}
+    cx.restore();
+  }
+  // past tense: long fading tail
+  if(g.past){const p=pts[n-1];flow(quadP(p[0],p[1],p[0]-30*s,p[1]+10*Math.sin(t)*s,p[0]-70*s,p[1]),{w:5*s,hues,t,seed:(g.seed||1)+3,layers:3,taper:"tail",wave:40*s,dark:g.dark,a:.9})}
+  // body = layered colour streams braiding along the spine (a small milky way)
+  cx.save();
+  cx.globalCompositeOperation=g.dark?"source-over":"lighter";
+  const rad=i=>((g.hand===3?11:9)*s*(1-i/(n+2))+3*s)*1.35;
+  const pal=hues.concat(mixHue||[]),RB=rng((g.seed||1)+31),M=26,nb=Math.min(9,5+pal.length+(g.richness>.5?1:0));
+  const at=u=>{const f=u*(n-1),i0=Math.floor(f),fr=f-i0,i1=Math.min(n-1,i0+1);return[lerp(pts[i0][0],pts[i1][0],fr),lerp(pts[i0][1],pts[i1][1],fr),lerp(rad(i0),rad(i1),fr)]};
+  for(let k=0;k<nb;k++){
+    const h=pal[k%pal.length]+(RB()-.5)*(k<pal.length?10:60),ph=RB()*6.283,wk=.8+RB()*1.6,amp=.3+RB()*.6,wid=.18+RB()*.32,fl=(.6+RB())*(g.speed||1)*(1+(g.jitter||0))*(1+ENERGY*1.5);
+    const L=[],Rr=[];
+    for(let j=0;j<=M;j++){const u=j/M,[px,py,r]=at(u);const u2=Math.min(1,u+1/M),q=at(u2);let nx=-(q[1]-py),ny=q[0]-px;const nl=Math.hypot(nx,ny)||1;nx/=nl;ny/=nl;
+      const off=Math.sin(t*fl-u*2.6*wk+ph)*r*amp;const taper=Math.min(1,(u+.04)/.18)*Math.pow(1-u,.55);const w=r*wid*taper+.4;
+      L.push([px+nx*(off+w),py+ny*(off+w)]);Rr.push([px+nx*(off-w),py+ny*(off-w)])}
+    for(const[ww,al]of[[1,g.dark?.28:.09],[.4,g.dark?.35:.14]]){
+      cx.beginPath();L.forEach((p,j)=>{const c=Rr[j],mx=(p[0]+c[0])/2,my=(p[1]+c[1])/2;const x=mx+(p[0]-mx)*ww,y=my+(p[1]-my)*ww;j?cx.lineTo(x,y):cx.moveTo(x,y)});
+      for(let j=M;j>=0;j--){const p=L[j],c=Rr[j],mx=(p[0]+c[0])/2,my=(p[1]+c[1])/2;cx.lineTo(mx+(c[0]-mx)*ww,my+(c[1]-my)*ww)}
+      cx.closePath();cx.fillStyle=hsl(h,g.dark?30:85,g.dark?26:(ww<1?64:54),al);cx.fill()}
+  }
+  cx.restore();
+  const hx=pts[0][0],hy=pts[0][1],hr=((g.hand===3?11:9)+3)*s;
+  {const P=new Set([...(g.parts||[]),...(opts.parts||[])]),sd=(g.seed||1),lh=[hues[0],hues[hues.length-1]];
+   if(P.has("hair"))for(let k=0;k<5;k++){const a=-2.2-k*.28+Math.sin(t*1.3+k)*.12;flow(quadP(hx,hy-hr*.3,hx+Math.cos(a)*hr*1.4,hy+Math.sin(a)*hr*1.6,hx+Math.cos(a-.4)*hr*2.6,hy+Math.sin(a-.2)*hr*2.2),{w:1.8*s,hues:[45,hues[0]],t,seed:sd+k*3,layers:2,taper:"tail",wave:18*s,amp:.5,dark:g.dark})}
+   if(P.has("wings")&&g.hand!==2){const f=Math.sin(t*5)*.5;for(const d of[-1,1])flow(quadP(hx-4*s,hy,hx-12*s,hy+d*(20+f*9)*s,hx-28*s,hy+d*(8+f*5)*s),{w:5*s,hues:lh,t,seed:sd+d+40,layers:3,taper:"tail",wave:26*s,dark:g.dark})}
+   if(P.has("tail")){const e=pts[n-1];flow(quadP(e[0],e[1],e[0]-30*s,e[1]+14*Math.sin(t*2)*s,e[0]-80*s,e[1]-8*s),{w:4*s,hues:lh,t,seed:sd+50,layers:3,taper:"tail",wave:30*s,dark:g.dark})}
+   if(P.has("arms")&&n>1){const b=pts[1];for(const d of[-1,1])flow(quadP(b[0],b[1],b[0]+8*s,b[1]+d*10*s,b[0]+16*s+Math.sin(t*3+d)*3*s,b[1]+d*16*s),{w:2.2*s,hues:lh,t,seed:sd+d+60,layers:2,taper:"tail",wave:14*s,amp:.4,dark:g.dark})}
+   if(P.has("legs")){const b=pts[Math.max(0,n-2)];for(const d of[-1,1])flow(quadP(b[0]+d*4*s,b[1],b[0]+d*6*s,b[1]+12*s,b[0]+d*4*s+Math.sin(t*4+d)*3*s,b[1]+22*s),{w:2.2*s,hues:lh,t,seed:sd+d+70,layers:2,taper:"tail",wave:14*s,amp:.4,dark:g.dark})}
+   if(P.has("mouth"))flow(arcP(hx+hr*.25,hy+hr*.15,hr*.35,.4,2.2),{w:1.4*s,hues:[340,20],t,seed:sd+80,layers:2,wave:10*s,amp:.3});
+   if(P.has("eyes"))for(const d of[-1,1]){const ex=hx+hr*.35,ey=hy+d*hr*.32;flow([[ex-3*s,ey],[ex,ey-1.2*s],[ex+3*s,ey],[ex,ey+1.2*s],[ex-3*s,ey]],{w:1.3*s,hues:[50,hues[0]],t,seed:sd+d+90,layers:2,taper:"none",wave:8*s,amp:.2,max:12})}
+   if(P.has("heart")){const m=pts[Math.floor(n/2)],pu=1+.25*Math.sin(t*4);const gr=cx.createRadialGradient(m[0],m[1],0,m[0],m[1],8*s*pu);gr.addColorStop(0,hsl(350,80,70,.55));gr.addColorStop(1,hsl(350,80,60,0));cx.save();cx.globalCompositeOperation="lighter";cx.fillStyle=gr;cx.beginPath();cx.arc(m[0],m[1],8*s*pu,0,7);cx.fill();cx.restore()}
+   if(P.has("head")){const gr=cx.createRadialGradient(hx,hy,0,hx,hy,hr*1.6);gr.addColorStop(0,hsl(hues[0],60,80,.25));gr.addColorStop(1,hsl(hues[0],60,70,0));cx.save();cx.globalCompositeOperation="lighter";cx.fillStyle=gr;cx.beginPath();cx.arc(hx,hy,hr*1.6,0,7);cx.fill();cx.restore()}
+  }
+  // wings for hand 2
+  if(g.hand===2){const f=Math.sin(t*6*g.speed)*.5;for(const d of[-1,1])flow(quadP(hx-4*s,hy,hx-10*s,hy+d*(16+f*8)*s,hx-24*s,hy+d*(6+f*4)*s),{w:4*s,hues,t,seed:(g.seed||1)+d+9,layers:3,taper:"tail",wave:25*s,dark:g.dark})}
+  // spikes: anger, envy, a thorny writer
+  if(g.spikes>0){const sh=g.dark?[350,5,330]:[hues[0],350,20];for(let k=0;k<g.spikes;k++){const a=k/g.spikes*Math.PI*2+t*.2,b=a+.25*Math.sin(t*2+k);flow(quadP(hx+Math.cos(a)*hr*.8,hy+Math.sin(a)*hr*.8,hx+Math.cos(a)*hr*1.3,hy+Math.sin(a)*hr*1.3,hx+Math.cos(b)*hr*1.8,hy+Math.sin(b)*hr*1.8),{w:3.2*s,hues:sh,t,seed:(g.seed||1)+k*5,layers:2,taper:"tail",amp:.3,wave:20*s,dark:g.dark})}}
+  // question: reaching tendrils
+  if(g.question){for(let k=0;k<3;k++){const a=-0.6+k*0.6,ex=hx+hr*2.3+Math.sin(t*2+k)*4*s,ey=hy+a*hr*1.6;flow(quadP(hx+hr*.6,hy,hx+hr*1.4,hy+a*hr*.4,ex,ey),{w:2.6*s,hues:[HUE.curious,hues[0]],t,seed:(g.seed||1)+k*11,layers:2,taper:"tail",wave:22*s})}}
+  // future: light ahead
+  if(g.future){const gr=cx.createRadialGradient(hx+hr*2,hy,0,hx+hr*2,hy,hr*1.6);gr.addColorStop(0,hsl(50,90,80,.5));gr.addColorStop(1,hsl(50,90,80,0));cx.fillStyle=gr;cx.beginPath();cx.arc(hx+hr*2,hy,hr*1.6,0,7);cx.fill()}
+  // "we": little companions
+  if(g.we){for(let k=0;k<Math.min(3,g.we+1);k++){const a=t*1.5+k*2.1;flow(arcP(hx,hy,hr*1.9,a,a+1.3),{w:2.6*s,hues:[hues[(k+1)%hues.length],hues[0]],t,seed:(g.seed||1)+k*13,layers:2,wave:20*s,amp:.5})}}
+  // "I": inward ring
+  if(g.self&&!g.we){flow(arcP(hx,hy,hr*.6,t,t+4.6),{w:2.2*s,hues:[hues[0],hues[hues.length-1]],t,seed:(g.seed||1)+21,layers:2,wave:18*s,amp:.4})}
+  // head: no eyes; the stream gathers into a soft inner light (brighter when the words look at someone)
+  {const e=clamp((g.eyes||1)*(g.you?1.3:1),.5,2.2),hr2=hr*(.9+e*.35),gr=cx.createRadialGradient(hx,hy,0,hx,hy,hr2);gr.addColorStop(0,g.dark?hsl(30,70,55,.35):hsl(hues[0],60,92,.38*e));gr.addColorStop(1,hsl(hues[0],60,70,0));cx.save();cx.globalCompositeOperation=g.dark?"source-over":"lighter";cx.fillStyle=gr;cx.beginPath();cx.arc(hx,hy,hr2,0,7);cx.fill();cx.restore()}
+  return{hx,hy,hr};
+}
+
+// ---------- world model ----------
+const local=[]; // sugs drawn in own bubble (from inner) or animations
+function placeOf(id,t){const h=hash(id),r=rng(h);const bx=0.12+r()*0.76,by=0.14+r()*0.62;return[(bx+Math.sin(t*0.05+h)*0.04)*W,(by+Math.cos(t*0.04+h%7)*0.035)*H]}
+
+function bubbleLook(){
+  const T=me.traits;
+  return{
+    clarity:clamp(T.O/100,0.1,1),          // open = see-through
+    thorns:T.A<42?Math.round((42-T.A)/3)+3:0, // argumentative = thorns
+    wobble:clamp((T.N-40)/60,0,1),        // sensitive = colours shift easily
+  };
+}
+
+let t0=performance.now(), flights=[];
+function frame(now){
+  const t=(now-t0)/1000;
+  cx.clearRect(0,0,W,H);
+  // sky
+  const sky=cx.createRadialGradient(W/2,H*.45,0,W/2,H*.45,Math.max(W,H)*.75);
+  sky.addColorStop(0,"#2c2148");sky.addColorStop(1,"#120d22");cx.fillStyle=sky;cx.fillRect(0,0,W,H);
+  if(bg.complete&&bg.naturalWidth){const a=mode==="world"?0.1:0.12;cx.globalAlpha=a;const s=Math.max(W/bg.naturalWidth,H/bg.naturalHeight);cx.drawImage(bg,(W-bg.naturalWidth*s)/2,(H-bg.naturalHeight*s)/2,bg.naturalWidth*s,bg.naturalHeight*s);cx.globalAlpha=1}
+  // stars
+  {const BH=[285,320,200,250,35];for(let k=0;k<5;k++){const d=Math.sin(t*.05+k*1.7)*H*.05,q=Rec();q.moveTo(-W*.2,H*(.95-k*.04)+d);q.bezierCurveTo(W*.3,H*.6+d*2,W*.6,H*.35-d,W*1.2,H*(.05+k*.05)-d);flow(q.P[0],{w:W*.16,hues:[BH[k],BH[(k+2)%5]],t:t*.25,seed:500+k,layers:3,taper:"none",wave:W*.6,amp:.5,a:mode==="world"?.18:.3,max:40})}}
+  const sr=rng(99),SH=[300,320,190,215,265,45];for(let i=0;i<90;i++){const x=sr()*W,y=sr()*H,h=SH[Math.floor(sr()*6)],big=sr()<.06,z=big?1.8:.6+sr()*1.2,tw=.3+.7*Math.abs(Math.sin(t*(.4+sr())+i));cx.fillStyle=hsl(h,85,75,.5*tw);cx.fillRect(x-z/2,y-z/2,z,z);if(big&&tw>.7){cx.fillRect(x-6,y-.4,12,.8);cx.fillRect(x-.4,y-6,.8,12)}}
+  stirTick();audioTick();
+  if(mode==="world")drawWorld(t);else drawHome(t);
+  drawTrail(t);
+  // flights (a reply flying to its sug)
+  flights=flights.filter(f=>{const k=clamp((now-f.start)/1600,0,1);const x=lerp(f.x0,f.x1,k),y=lerp(f.y0,f.y1,k)-Math.sin(k*Math.PI)*60;drawSug(f.g,x,y,t,0.9);return k<1});
+  requestAnimationFrame(frame);
+}
+
+function drawHome(t){
+  const L=bubbleLook();
+  const cxm=W/2, cym=H*0.44, R=Math.min(W,H)*0.33;
+  const innerK=me.inner/100, outerK=me.outer/100;
+  // outer glow
+  const og=cx.createRadialGradient(cxm,cym,R*.9,cxm,cym,R*1.35);og.addColorStop(0,hsl(42,90,70,.05+outerK*.35));og.addColorStop(1,hsl(42,90,70,0));cx.fillStyle=og;cx.beginPath();cx.arc(cxm,cym,R*1.35,0,7);cx.fill();
+  // inside
+  const hollow=me.outer>70&&me.inner<30;
+  const ig=cx.createRadialGradient(cxm,cym-R*.2,0,cxm,cym,R);
+  const ih=hollow?250:lerp(260,40,innerK);
+  ig.addColorStop(0,hsl(ih,hollow?8:50,18+innerK*38,.9));ig.addColorStop(1,hsl(ih,hollow?5:40,10+innerK*16,.85));
+  cx.fillStyle=ig;cx.beginPath();cx.arc(cxm,cym,R,0,7);cx.fill();
+  // inner world: objects become simple ink shapes, sugs live there
+  cx.save();cx.beginPath();cx.arc(cxm,cym,R-2,0,7);cx.clip();
+  const objs=[...new Set([...inner.flatMap(s=>s.g.objects||[]),...(me.land||[]).flatMap(l=>l.o||[])])].slice(0,8);
+  if(me.land&&me.land.length){for(let k=0;k<Math.min(6,Math.ceil(me.land.length/3));k++){const it=me.land.slice(k*3,k*3+3),y=cym+R*(.9-k*.075),q=Rec();q.moveTo(cxm-R,y);q.bezierCurveTo(cxm-R*.4,y-R*.12*Math.sin(k+1),cxm+R*.4,y+R*.08,cxm+R,y-R*.05);flow(q.P[0],{w:R*.06,hues:it.map(x=>x.h),t:t*.4,seed:1200+k,layers:3,taper:"none",wave:R*1.5,amp:.3,a:.7,dark:it.every(x=>x.d),max:40})}}
+  objs.forEach((o,i)=>drawObject(o,cxm+(i%4-1.5)*R*.42,cym+R*(i<4?.42:.12),R*.16,t));
+  inner.slice(-9).forEach((s,i)=>{const a=i*0.7+t*0.15*(s.g.speed||1);const rr=R*(.25+((i*37)%50)/120);drawSug(s.g,cxm+Math.cos(a)*rr,cym-R*.1+Math.sin(a)*rr*.6,t,1.1+(s.g.merged?Math.min(.5,(s.g.merged-1)*.15):0),{mixHues:s.g.mixH})});
+  cx.restore();
+  // wall: clarity, wobble, thorns
+  const wallA=lerp(0.85,0.25,L.clarity);
+  cx.lineWidth=2+ (1-L.clarity)*6;
+  const wh=200+Math.sin(t*(0.5+L.wobble*3))*L.wobble*80;
+  {const ph=[wh,...inner.slice(-6).flatMap(x=>x.g.hues||[]),290,190,320];flow(arcP(cxm,cym,R,t*.05,t*.05+6.2832),{w:5+(1-L.clarity)*9+L.wobble*4,hues:ph,t,seed:7,layers:6,taper:"none",wave:R*2.6,amp:.35+L.wobble*.6,a:.6+wallA*.6,max:160})}
+
+  if(mode==="wake"){cx.fillStyle=`rgba(40,32,62,${0.55-me.writes*0.22})`;cx.beginPath();cx.arc(cxm,cym,R,0,7);cx.fill()}
+  // iridescent sheen
+
+  if(L.thorns){for(let k=0;k<L.thorns*3;k++){const a=k/(L.thorns*3)*Math.PI*2+t*.02;flow(quadP(cxm+Math.cos(a)*R,cym+Math.sin(a)*R,cxm+Math.cos(a)*(R+9),cym+Math.sin(a)*(R+9),cxm+Math.cos(a+.06)*(R+18),cym+Math.sin(a+.06)*(R+18)),{w:3,hues:[25,350],t,seed:k+40,layers:2,taper:"tail",amp:.2,wave:15,dark:true})}}
+  // owl clock in bubble
+  drawOwl(cxm+R*.62,cym-R*.55,R*.09,t);
+  {const dk=inner.filter(x=>x.g&&x.g.dark).slice(-8);dk.forEach((x,i)=>{const a=2.3+i*.13+Math.sin(t*.4+i)*.04,rr=R*(.8-((i*7)%3)*.05),bx=cxm+Math.cos(a)*rr,by=cym+Math.sin(a)*rr;flow(arcP(bx,by,6+i%3*2,t*.5+i,t*.5+i+6.2832),{w:4,hues:[265,250],t,seed:900+i,layers:2,taper:"none",wave:14,amp:.5,dark:true,max:20})})}
+  {const mutual=dbOk&&me.id&&(()=>{const a=new Set(replies.filter(r=>r.from===me.id).map(r=>r.toOwner)),b=new Set(replies.filter(r=>r.toOwner===me.id).map(r=>r.from));return[...a].some(x=>b.has(x)&&x!==me.id)})();
+   if(mutual)flow(quadP(cxm,cym-R*.98,cxm+R*.3,cym-R*1.5,cxm+R*.15+Math.sin(t*.5)*20,-10),{w:3,hues:[45,40,50],t,seed:31,layers:3,taper:"tail",wave:60,amp:.6});
+   const myDark=inner.filter(x=>x.g&&x.g.dark).length+replies.filter(r=>r.from===me.id&&r.g&&r.g.dark).length;
+   if(myDark>=2)flow(quadP(cxm-R*.7,cym+R*.7,cxm-R*1.1,cym+R*1.2,-10,H+10),{w:2+Math.min(6,myDark),hues:[230,240],t,seed:32,layers:2,taper:"tail",wave:60,amp:.5,dark:true})}
+  // my released sugs return changed
+  hit=[];LASTVT={z:1,ox:0,oy:0};if(dbOk&&me.id){const mine=world.filter(s=>s.owner===me.id).slice(-4);mine.forEach((s,i)=>{const x=cxm-R*1.05+i*R*.7,y=cym+R*1.12;if(y<H-150){const hb=drawSug(Object.assign({},s.g,{seed:hash(s.id)}),x,y,t,0.8,{mixHues:s.replyHues,parts:s.parts});hit.push({s,x:hb.hx,y:hb.hy,r:Math.max(30,hb.hr*2.4)});SPOS[s.id]=[hb.hx,hb.hy]}})}
+}
+
+function drawObject(o,x,y,r,t){
+  const P=Rec();
+  switch(o){
+    case"window":P.rect(x-r*.6,y-r*.8,r*1.2,r*1.4);P.moveTo(x,y-r*.8);P.lineTo(x,y+r*.6);P.moveTo(x-r*.6,y-r*.1);P.lineTo(x+r*.6,y-r*.1);break;
+    case"tree":P.moveTo(x,y+r*.8);P.lineTo(x,y-r*.1);P.arc(x,y-r*.4,r*.55,0,7);break;
+    case"sea":for(let k=0;k<3;k++){P.moveTo(x-r,y+k*6);for(let i=0;i<=8;i++)P.lineTo(x-r+i*r/4,y+k*6+Math.sin(t*2+i+k)*3)}break;
+    case"cup":P.rect(x-r*.4,y-r*.2,r*.8,r*.7);P.moveTo(x+r*.4,y);P.arc(x+r*.55,y+r*.1,r*.18,-1.5,1.5);for(let k=0;k<2;k++){P.moveTo(x-r*.1+k*r*.2,y-r*.3);P.quadraticCurveTo(x+k*r*.2,y-r*.6+Math.sin(t*2)*3,x-r*.1+k*r*.2,y-r*.9)}break;
+    case"house":P.moveTo(x-r*.6,y+r*.6);P.lineTo(x-r*.6,y-r*.1);P.lineTo(x,y-r*.7);P.lineTo(x+r*.6,y-r*.1);P.lineTo(x+r*.6,y+r*.6);P.closePath();break;
+    case"book":P.moveTo(x,y-r*.4);P.quadraticCurveTo(x-r*.5,y-r*.6,x-r*.8,y-r*.4);P.lineTo(x-r*.8,y+r*.4);P.quadraticCurveTo(x-r*.5,y+r*.2,x,y+r*.4);P.quadraticCurveTo(x+r*.5,y+r*.2,x+r*.8,y+r*.4);P.lineTo(x+r*.8,y-r*.4);P.quadraticCurveTo(x+r*.5,y-r*.6,x,y-r*.4);P.lineTo(x,y+r*.4);break;
+    case"star":for(let k=0;k<5;k++){const a=k*1.2566-1.57;P.lineTo(x+Math.cos(a)*r*.6,y+Math.sin(a)*r*.6);P.lineTo(x+Math.cos(a+.628)*r*.25,y+Math.sin(a+.628)*r*.25)}P.closePath();break;
+    case"moon":P.arc(x,y,r*.5,.6,5.7);P.quadraticCurveTo(x+r*.1,y,x+r*.4,y+r*.28);break;
+    case"sun":P.arc(x,y,r*.35,0,7);for(let k=0;k<8;k++){const a=k*.785+t*.2;P.moveTo(x+Math.cos(a)*r*.5,y+Math.sin(a)*r*.5);P.lineTo(x+Math.cos(a)*r*.75,y+Math.sin(a)*r*.75)}break;
+    case"flower":for(let k=0;k<5;k++){const a=k*1.2566+Math.sin(t)*.1;P.moveTo(x,y-r*.2);P.arc(x+Math.cos(a)*r*.25,y-r*.2+Math.sin(a)*r*.25,r*.18,0,7)}P.moveTo(x,y);P.lineTo(x,y+r*.8);break;
+    case"rain":for(let k=0;k<7;k++){const yy=y-r+((t*60+k*23)%(r*2));P.moveTo(x-r+k*r/3,yy);P.lineTo(x-r+k*r/3-3,yy+8)}break;
+    case"snow":for(let k=0;k<7;k++){const yy=y-r+((t*20+k*23)%(r*2));P.moveTo(x-r+k*r/3+2,yy);P.arc(x-r+k*r/3,yy,2,0,7)}break;
+    case"cat":P.ellipse(x,y+r*.2,r*.5,r*.3,0,0,7);P.moveTo(x+r*.3,y-r*.1);P.arc(x+r*.35,y-r*.15,r*.22,0,7);break;
+    case"dog":P.ellipse(x,y+r*.2,r*.55,r*.28,0,0,7);P.moveTo(x+r*.55,y-r*.05);P.arc(x+r*.5,y-r*.1,r*.2,0,7);break;
+    case"bird":P.moveTo(x-r*.6,y);P.quadraticCurveTo(x-r*.3,y-r*.4+Math.sin(t*4)*4,x,y);P.quadraticCurveTo(x+r*.3,y-r*.4+Math.sin(t*4)*4,x+r*.6,y);break;
+    case"hill":P.moveTo(x-r,y+r*.5);P.quadraticCurveTo(x,y-r*.6,x+r,y+r*.5);break;
+    case"river":P.moveTo(x-r,y);P.bezierCurveTo(x-r*.3,y-r*.4,x+r*.3,y+r*.4,x+r,y);break;
+    case"frame":P.rect(x-r*.6,y-r*.5,r*1.2,r);P.moveTo(x-r*.4,y+r*.3);P.lineTo(x-r*.1,y-r*.1);P.lineTo(x+r*.2,y+r*.2);break;
+    case"lamp":P.moveTo(x-r*.35,y-r*.2);P.lineTo(x+r*.35,y-r*.2);P.lineTo(x+r*.2,y-r*.6);P.lineTo(x-r*.2,y-r*.6);P.closePath();P.moveTo(x,y-r*.2);P.lineTo(x,y+r*.6);
+      {const gr=cx.createRadialGradient(x,y-r*.2,0,x,y-r*.2,r);gr.addColorStop(0,"rgba(255,220,140,.35)");gr.addColorStop(1,"rgba(255,220,140,0)");cx.fillStyle=gr;cx.fillRect(x-r,y-r*1.2,r*2,r*2)}break;
+    case"swing":P.moveTo(x-r*.4,y-r);P.lineTo(x-r*.4+Math.sin(t)*6,y+r*.3);P.moveTo(x+r*.4,y-r);P.lineTo(x+r*.4+Math.sin(t)*6,y+r*.3);P.moveTo(x-r*.5+Math.sin(t)*6,y+r*.3);P.lineTo(x+r*.5+Math.sin(t)*6,y+r*.3);break;
+    default:P.arc(x,y,r*.3,0,7);
+  }
+  P.P.forEach((q,i)=>flow(q,{w:Math.max(2.2,r*.09),hues:[42,28,300],t,seed:hash(o)+i,layers:3,wave:r*3,amp:.25,a:.9}));
+}
+
+function drawOwl(x,y,r,t){
+  const P=Rec();P.ellipse(x,y,r,r*1.25,0,0,6.2832);P.moveTo(x+r*.55,y+r*.25);P.arc(x,y+r*.25,r*.55,0,6.2832);P.moveTo(x,y+r*.25);P.lineTo(x+Math.cos(t*.1)*r*.4,y+r*.25+Math.sin(t*.1)*r*.4);
+  for(const d of[-1,1]){P.moveTo(x+d*r*.38+r*.22,y-r*.45);P.arc(x+d*r*.38,y-r*.45,r*.22,0,6.2832)}
+  P.P.forEach((q,i)=>flow(q,{w:Math.max(2,r*.12),hues:[38,25,48],t,seed:77+i,layers:3,wave:r*1.5,amp:.4}));
+}
+
+
+function juniper(x,y,t,k){for(let i=0;i<3;i++){const a=t*.6+i*2.1,q=Rec();q.moveTo(x+Math.cos(a)*14,y+18);q.bezierCurveTo(x+Math.cos(a+1)*34,y,x+Math.cos(a+2)*28,y-26,x+Math.cos(a+3)*10,y-48);flow(q.P[0],{w:7,hues:[52,45,60],t,seed:300+i,layers:3,taper:"tail",wave:40,amp:.8,a:.45*k})}}
+// sea of tears (book ch.6): unanswered thoughts and unsaid words sink here
+function drawSea(t,depth){const y0=H*(1-depth);for(let k=0;k<4;k++){const q=Rec(),d=k*H*.012;q.moveTo(-20,y0+d);q.bezierCurveTo(W*.3,y0+d-12*Math.sin(t*.4+k),W*.7,y0+d+12*Math.cos(t*.3+k),W+20,y0+d);flow(q.P[0],{w:H*depth*.5,hues:[210,225,195],t:t*.6,seed:700+k,layers:2,taper:"none",wave:W*.5,amp:.3,a:.35,max:50})}}
+let hit=[];
+// ---------- the shared world: a map that grows with its people ----------
+const cam={x:0,y:0,z:1,init:false},BP={},SPOS={};let bhit=[];let LASTVT={z:1,ox:0,oy:0},WR=400;
+function nightClass(){const d=new Date();return d.getHours()===21&&d.getMinutes()<30}
+// each time you go out you meet a small neighbourhood: your gold-path people, people who feel like you lately, and a couple who feel differently
+let HOOD=null;
+function profileOf(id){const v={};let n=0,dk=0;
+  const src=id===me.id?inner.slice(-6).map(x=>x.g).concat(world.filter(s=>s.owner===id).slice(-4).map(s=>s.g)):world.filter(s=>s.owner===id).slice(-6).map(s=>s.g).concat(replies.filter(r=>r.from===id).slice(-4).map(r=>r.g));
+  src.forEach(g=>{if(!g)return;n++;if(g.dark)dk++;(g.ranked||[]).slice(0,2).forEach((k,i)=>v[k]=(v[k]||0)+(i?.5:1))});return{v,n,dark:n?dk/n:0}}
+function simP(a,b){let d=0,na=0,nb=0;for(const k in a.v){na+=a.v[k]**2;if(b.v[k])d+=a.v[k]*b.v[k]}for(const k in b.v)nb+=b.v[k]**2;return na&&nb?d/Math.sqrt(na*nb):0}
+function pickHood(all){const others=all.filter(i=>i!==me.id);if(others.length<=8)return[me.id,...others];
+  const mine=profileOf(me.id),to=new Set(replies.filter(r=>r.from===me.id).map(r=>r.toOwner)),from=new Set(replies.filter(r=>r.toOwner===me.id).map(r=>r.from));
+  const gold=others.filter(i=>to.has(i)&&from.has(i)).slice(0,4),rest=others.filter(i=>!gold.includes(i)).map(id=>({id,p:profileOf(id)}));
+  rest.forEach(o=>o.s=simP(mine,o.p)-Math.abs(mine.dark-o.p.dark)*.3+Math.random()*.15);
+  const similar=rest.slice().sort((a,b)=>b.s-a.s).slice(0,4),left=rest.filter(o=>!similar.includes(o));
+  left.forEach(o=>o.c=(1-o.p.dark)+((o.p.v.kind||0)+(o.p.v.joy||0)+(o.p.v.hope||0))*.2+Math.random()*.1);
+  const diff=left.sort((a,b)=>b.c-a.c).slice(0,2);
+  return[me.id,...gold,...similar.map(o=>o.id),...diff.map(o=>o.id)]}
+function layout(){const first={},see=(id,ts)=>{if(!id)return;if(first[id]==null||ts<first[id])first[id]=ts};
+  world.forEach(s=>see(s.owner,s.ts||0));replies.forEach(r=>{see(r.from,r.ts||0);see(r.toOwner,r.ts||0)});if(me.id)see(me.id,first[me.id]==null?Date.now():first[me.id]);
+  const all=Object.keys(first).sort((a,b)=>first[a]-first[b]||(a<b?-1:1)),D=nightClass()?150:270,P={};
+  if(all.length<=9||!HOOD)HOOD=pickHood(all);const ids=HOOD.filter(i=>first[i]!=null);
+  ids.forEach((id,i)=>{const r=D*Math.sqrt(i),a=i*2.39996;P[id]=[Math.cos(a)*r,Math.sin(a)*r]});
+  return{P,ids,set:new Set(ids),R:D*Math.sqrt(Math.max(1,ids.length-1))+170}}
+function drawWorld(t){
+  hit=[];const LY=layout();WR=LY.R;
+  LY.ids.forEach(id=>{const g=LY.P[id],c=BP[id]||(BP[id]=g.slice());c[0]=lerp(c[0],g[0],.03);c[1]=lerp(c[1],g[1],.03)});
+  const mine=BP[me.id]||[0,0];
+  if(!cam.init){cam.x=mine[0];cam.y=mine[1];cam.z=clamp(Math.min(W,H)/(LY.R*2.1),.45,1);cam.init=true}
+  // dark path from the corner of the screen: grows with every dark word
+  const darkN=world.filter(s=>s.g&&s.g.dark).length+replies.filter(r=>r.g&&r.g.dark).length;
+  const len=clamp(darkN,0,40);
+  for(let i=0;i<len;i++){const k=i/40;const x=W*(0.02+k*0.45)+Math.sin(t*.6+i)*8,y=H*(0.98-k*0.35)+Math.cos(t*.5+i*1.7)*10;cx.fillStyle=`rgba(8,4,14,${.75-k*.3})`;cx.beginPath();cx.ellipse(x,y,14-k*6,10-k*4,Math.sin(i),0,7);cx.fill();if(i%3===0){cx.fillStyle="rgba(255,190,110,.8)";cx.beginPath();cx.arc(x+3,y-2,1.3,0,7);cx.arc(x+7,y-2,1.3,0,7);cx.fill()}}
+  VT={z:cam.z,ox:W/2-cam.x*cam.z,oy:H/2-cam.y*cam.z};LASTVT=Object.assign({},VT);
+  cx.save();cx.translate(VT.ox,VT.oy);cx.scale(VT.z,VT.z);
+  const now=Date.now(),seaOf=s=>!(s.replies>0)&&now-(s.ts||now)>864e5,seaY=LY.R+90;
+  // the sea of tears lies below everyone; unsaid words make it deeper
+  {const ghostSum=world.reduce((a,s)=>a+((s.g&&s.g.ghost)||0),0),dw=clamp(30+ghostSum*3,30,90);for(let k=0;k<4;k++){const q=Rec(),d=k*12;q.moveTo(-LY.R-300,seaY+d);q.bezierCurveTo(-LY.R*.3,seaY+d-14*Math.sin(t*.4+k),LY.R*.3,seaY+d+14*Math.cos(t*.3+k),LY.R+300,seaY+d);flow(q.P[0],{w:dw,hues:[210,225,195],t:t*.6,seed:700+k,layers:2,taper:"none",wave:400,amp:.3,a:.4,max:60})}}
+  const warm={};replies.forEach(r=>{if(r.sugId&&r.g&&!r.g.dark)warm[r.sugId]=(warm[r.sugId]||0)+1});
+  // threads between people: grey one way, gold when both have answered (book ch.7)
+  const pairs=new Map();replies.forEach(r=>{if(!r.from||!r.toOwner||r.from===r.toOwner)return;const k=[r.from,r.toOwner].sort().join("|");const p=pairs.get(k)||{a:0,b:0,ids:[r.from,r.toOwner].sort()};if(r.from===p.ids[0])p.a++;else p.b++;pairs.set(k,p)});
+  pairs.forEach(p=>{if(!LY.set.has(p.ids[0])||!LY.set.has(p.ids[1]))return;const A=BP[p.ids[0]],B=BP[p.ids[1]];if(!A||!B)return;const mut=p.a&&p.b,w=clamp(p.a+p.b,2,8);
+    flow(quadP(A[0],A[1],(A[0]+B[0])/2,(A[1]+B[1])/2+(mut?-50:50),B[0],B[1]),mut?{w:2+w*1.2,hues:[42,35,50],t,seed:hash(p.ids.join()),layers:3,wave:90,amp:.6,a:.5+w*.08}:{w:3,hues:[230,240],t,seed:hash(p.ids.join())+1,layers:2,wave:80,amp:.5,a:.6,dark:true})});
+  // every bubble: from outside only a smooth shell (book ch.10); yours is warm
+  bhit=[];LY.ids.forEach(id=>{const[bx,by]=BP[id],mineB=id===me.id,r=mineB?48:36+hash(id)%10;bhit.push({id,x:bx,y:by,r});
+    flow(arcP(bx,by,r,0,6.2832),mineB?{w:5,hues:[42,290,320],t:t*.5,seed:hash(id),layers:4,taper:"none",wave:150,amp:.2,a:.8,max:50}:{w:3,hues:[215,230,250],t:t*.3,seed:hash(id),layers:3,taper:"none",wave:150,amp:.12,a:.5,max:50})});
+  // released thoughts drift near their owner, tied by the blue thread (book ch.11)
+  const live=world.slice(-80).filter(s=>LY.set.has(s.owner)&&s.g&&!s.home&&!seaOf(s)&&now-(s.ts||now)>LIFE.meet),met={},used=new Set();
+  live.forEach(a=>{if(used.has(a.id))return;const k=(a.g.ranked||[])[0];if(!k)return;const b=live.find(b=>!used.has(b.id)&&b.id!==a.id&&b.owner!==a.owner&&(b.g.ranked||[])[0]===k&&!!b.g.dark===!!a.g.dark);if(b){used.add(a.id);used.add(b.id);met[a.id]=b;met[b.id]=a}});
+  world.slice(-80).forEach(s=>{
+    if(!s.g||s.home||!LY.set.has(s.owner))return;
+    if(met[s.id]){const b=met[s.id];if(s.id>b.id)return;const A=BP[s.owner]||[0,0],B=BP[b.owner]||[0,0],r=rng(hash(s.id+b.id)),x=(A[0]+B[0])/2+(r()-.5)*80+Math.sin(t*.2)*10,y=(A[1]+B[1])/2+(r()-.5)*80;
+      for(const O of[A,B])flow(quadP(x,y,(x+O[0])/2+30,(y+O[1])/2+40,O[0],O[1]),{w:2.6,hues:[215,200,230],t,seed:hash(s.id)+O[0],layers:2,wave:60,amp:.5,a:.55,taper:"none"});
+      const g=Object.assign({},s.g,{seed:hash(s.id),segs:clamp((s.g.segs||1)+(b.g.segs||1),1,10),hues:[...new Set([...(s.g.hues||[]),...(b.g.hues||[])])].slice(0,5),parts:[...new Set([...(s.parts||[]),...(b.parts||[])])]});
+      const hb=drawSug(g,x,y,t,1.6,{mixHues:(s.replyHues||[]).concat(b.replyHues||[])});const sh=Object.assign({},s,{text:s.text+"  ·  "+b.text});
+      if(s.owner===me.id||b.owner===me.id)flow(arcP(hb.hx,hb.hy,hb.hr*2.4,t*.3,t*.3+6.2832),{w:3,hues:[42,48],t,seed:9,layers:2,taper:"none",wave:30,amp:.5,a:.7});
+      hit.push({s:sh,x:hb.hx,y:hb.hy,r:Math.max(30,hb.hr*2.2)});SPOS[s.id]=[hb.hx*VT.z+VT.ox,hb.hy*VT.z+VT.oy];return}const o=BP[s.owner]||[0,0],r=rng(hash(s.id)),sunk=seaOf(s);
+    const ang=r()*6.283+t*.025*(r()<.5?1:-1),rad=100+r()*80;let x=o[0]+Math.cos(ang)*rad,y=o[1]+Math.sin(ang)*rad*.85;
+    if(sunk){x=o[0]+(r()-.5)*220;y=seaY+10+r()*24+Math.sin(t*.8+r()*6)*4}
+    flow(quadP(x,y,(x+o[0])/2+30,(y+o[1])/2+40,o[0],o[1]),{w:2.6,hues:[215,200,230],t,seed:hash(s.id),layers:2,wave:60,amp:.5,a:.55,taper:"none"});
+    const calmed=s.g.dark&&(warm[s.id]||0)>=2;const g=Object.assign({},s.g,{seed:hash(s.id)},calmed?{dark:false,hues:(s.replyHues&&s.replyHues.length?s.replyHues:[50]).concat(s.g.hues||[])}:{});
+    if(calmed)juniper(x,y,t,clamp((warm[s.id]-1)*.5,.5,1));
+    if(sunk){cx.save();cx.globalAlpha=.6}const hb=drawSug(g,x,y,t,(s.owner===me.id?1.5:1.35)*(sunk?.6:1),{mixHues:s.replyHues,parts:s.parts});if(sunk)cx.restore();
+    if(s.owner===me.id)flow(arcP(hb.hx,hb.hy,hb.hr*2.4,t*.3,t*.3+6.2832),{w:3,hues:[42,48],t,seed:9,layers:2,taper:"none",wave:30,amp:.5,a:.7});
+    hit.push({s,x:hb.hx,y:hb.hy,r:Math.max(26,hb.hr*2.2)});SPOS[s.id]=[hb.hx*VT.z+VT.ox,hb.hy*VT.z+VT.oy];
+  });
+  cx.restore();VT={z:1,ox:0,oy:0};
+  if(!world.length){cx.fillStyle="rgba(236,230,246,.6)";cx.font="italic 20px "+getComputedStyle(document.documentElement).getPropertyValue("--display");cx.textAlign="center";cx.fillText(dbOk?T("Одоохондоо нам гүм байна. Анхны бодлыг чи сулла."):T("Хуваалцах ертөнцөд холбогдож байна…"),W/2,H*.42)}
+}
+requestAnimationFrame(frame);
+
+
+// ---------- sound: Sena's dream melody once, then a living pad; stirring rings, each sug sings its words ----------
+const MEL="mel.mp3";
+const SCALE=[293.66,349.23,392,440,523.25,587.33,698.46,783.99,880,1046.5];
+let AC=null,master=null,padG=null,windG=null,bpF=null,padLP=null,REV=null,muted=false,owlOn=false;
+try{muted=localStorage.getItem("sug_mute")==="1"}catch(e){}
+function sndLabel(){$("snd").textContent=muted?T("♪ дуугүй"):T("♪ дуу")}
+function audioInit(){
+  if(AC){if(AC.state==="suspended")AC.resume();return}
+  try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){return}
+  master=AC.createGain();master.gain.value=muted?0:.9;master.connect(AC.destination);
+  REV=AC.createConvolver();const len=AC.sampleRate*3,ir=AC.createBuffer(2,len,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3)}REV.buffer=ir;const wet=AC.createGain();wet.gain.value=.45;REV.connect(wet);wet.connect(master);
+  padLP=AC.createBiquadFilter();padLP.type="lowpass";padLP.frequency.value=500;padG=AC.createGain();padG.gain.value=0;padLP.connect(padG);padG.connect(master);padG.connect(REV);
+  [73.42,110,146.83,174.61,220].forEach((f,i)=>{const o=AC.createOscillator();o.type=i%2?"sine":"triangle";o.frequency.value=f;o.detune.value=(i-2)*5;const lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=.05+i*.03;lg.gain.value=.04;const g=AC.createGain();g.gain.value=[.2,.1,.07,.05,.03][i];lfo.connect(lg);lg.connect(g.gain);o.connect(g);g.connect(padLP);o.start();lfo.start()});
+  const nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;const ns=AC.createBufferSource();ns.buffer=nb;ns.loop=true;bpF=AC.createBiquadFilter();bpF.type="bandpass";bpF.frequency.value=600;bpF.Q.value=.9;windG=AC.createGain();windG.gain.value=0;ns.connect(bpF);bpF.connect(windG);windG.connect(master);windG.connect(REV);ns.start();
+  let melDur=0;
+  try{const getMel=MEL.startsWith("data:")?Promise.resolve((()=>{const b=atob(MEL.split(",")[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer})()):fetch(MEL).then(r=>r.arrayBuffer());
+    getMel.then(ab=>AC.decodeAudioData(ab,buf=>{const src=AC.createBufferSource();src.buffer=buf;const g=AC.createGain();g.gain.value=.85;src.connect(g);g.connect(master);src.start(AC.currentTime+.2);melDur=buf.duration;padG.gain.setTargetAtTime(.3,AC.currentTime+buf.duration-6,3)},()=>padG.gain.setTargetAtTime(.3,AC.currentTime,3))).catch(()=>padG.gain.setTargetAtTime(.3,AC.currentTime,3))}
+  catch(e){padG.gain.setTargetAtTime(.3,AC.currentTime,3)}
+}
+function bell(f,when,vol,dark){if(!AC||muted)return;const t=AC.currentTime+(when||0),g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+(dark?1.6:2.8));
+  const lp=AC.createBiquadFilter();lp.type="lowpass";lp.frequency.value=dark?700:5000;g.connect(lp);lp.connect(master);lp.connect(REV);
+  [[1,1],[2.76,.28],[5.4,.08]].forEach(([m,a])=>{const o=AC.createOscillator();o.type=dark?"triangle":"sine";o.frequency.value=f*m;const og=AC.createGain();og.gain.value=a;o.connect(og);og.connect(g);o.start(t);o.stop(t+3)})}
+function sugSong(g){if(!AC||muted)return;const hs=(g.hues&&g.hues.length?g.hues:[270]);const n=clamp(g.segs||3,2,7),step=clamp(.32/(g.speed||1),.14,.5);
+  for(let i=0;i<n;i++){let k=Math.round((hs[i%hs.length]/360)*7+(i%2)*(g.we?2:1))%8;if(g.question&&i===n-1)k=Math.min(9,k+2);let f=SCALE[k];if(g.dark)f/=2;bell(f,i*step+(g.jitter||0)*.05*(i%2),g.dark?.16:.13*(.7+(g.intensity||.5)*.6),g.dark);
+    if(g.ghost>.1)bell(f/2,i*step+step*.5,.04,true)}}
+function hoot(){if(!AC||muted)return;[0,.7].forEach(d=>{const t=AC.currentTime+d,o=AC.createOscillator(),g=AC.createGain();o.type="sine";o.frequency.setValueAtTime(400,t);o.frequency.exponentialRampToValueAtTime(330,t+.55);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.12,t+.08);g.gain.exponentialRampToValueAtTime(.0001,t+.6);o.connect(g);g.connect(master);g.connect(REV);o.start(t);o.stop(t+.7)})}
+let lastChime=0;
+function audioTick(){if(!AC)return;const now=AC.currentTime;windG.gain.setTargetAtTime(muted?0:Math.min(.22,ENERGY*.16),now,.12);bpF.frequency.setTargetAtTime(380+ENERGY*900,now,.2);padLP.frequency.setTargetAtTime(260+me.inner*9+ENERGY*300,now,.8);
+  if(ptr&&ENERGY>.15&&now-lastChime>.11&&Math.random()<ENERGY*.09){lastChime=now;const k=clamp(Math.floor((1-ptr.y/H)*SCALE.length),0,SCALE.length-1);bell(SCALE[k],0,.05+ENERGY*.03,false)}
+  const o=mode==="world"&&me.inner<25;if(o&&!owlOn)hoot();owlOn=o}
+addEventListener("pointerdown",audioInit,{passive:true});addEventListener("keydown",audioInit);
+$("snd").onclick=e=>{e.stopPropagation();audioInit();muted=!muted;try{localStorage.setItem("sug_mute",muted?"1":"0")}catch(_){}if(master)master.gain.setTargetAtTime(muted?0:.9,AC.currentTime,.1);sndLabel()};
+sndLabel();
+$("lang").onclick=e=>{e.stopPropagation();LANG=LANG==="en"?"mn":"en";try{localStorage.setItem("sug_lang",LANG)}catch(_){}applyStatic();sndLabel();const r=releasing;setMode(mode);if(r)$("releaseMode").click();else $("releaseMode").textContent=T("Бодлоо сулла")};
+$("fbBtn").onclick=e=>{e.stopPropagation();$("fbCard").hidden=false;$("fbInput").focus()};
+$("fbClose").onclick=()=>{$("fbCard").hidden=true};
+$("fbSend").onclick=async()=>{const t=$("fbInput").value.trim();if(!t)return;if(!db){toast(T("Илгээж чадсангүй."));return}
+ try{await db.collection("feedback").add({from:me.id,text:t.slice(0,600),lang:LANG,ts:Date.now()});$("fbInput").value="";$("fbCard").hidden=true;toast(T("Илгээлээ. Баярлалаа!"))}catch(err){toast(T("Илгээж чадсангүй."))}};
+
+// ---------- life of a sug: never destroyed, always changing (book rules 1, 3, 4) ----------
+// prototype runs in minutes; the real game would use days
+const LIFE={merge:3*60e3,land:20*60e3,home:10*60e3,meet:5*60e3};
+function burstAt(){stirs.push({x:W/2,y:H*.44,vx:0,vy:0,t:performance.now()/1000,burst:1})}
+function lifeTick(){
+  const now=Date.now();let changed=false;me.land=me.land||[];me.returned=me.returned||{};
+  const vis=inner.slice(-9),sens=clamp(me.traits.N/50,.4,2);
+  // 1. neighbours slowly take each other's colour
+  vis.forEach((s,i)=>{[vis[i-1],vis[i+1]].forEach(b=>{if(b&&Math.random()<.25){const h=(b.g.hues||[])[0];if(h!=null){s.g.mixH=(s.g.mixH||[]).concat(h).slice(-4);changed=true}}})});
+  // 2. darkness spreads to neighbours; warmth calms the dark (speed depends on sensitivity)
+  vis.forEach((s,i)=>{const n=[vis[i-1],vis[i+1]].filter(Boolean),dN=n.filter(x=>x.g.dark).length,wN=n.filter(x=>!x.g.dark&&(x.g.pos||0)>0).length;
+    if(!s.g.dark&&dN){s.g.shade=(s.g.shade||0)+.03*sens*dN;if(s.g.shade>=1){s.g.dark=true;s.g.shade=0;burstAt();changed=true}}
+    else if(s.g.dark&&wN){s.g.light=(s.g.light||0)+.03*wN/sens;if(s.g.light>=1){s.g.dark=false;s.g.light=0;s.g.hues=[HUE.hope].concat(s.g.hues||[]).slice(0,4);burstAt();changed=true}}});
+  // 3. sugs with the same feeling that have lived together merge into one
+  for(let i=0;i<inner.length;i++)for(let j=i+1;j<inner.length;j++){const a=inner[i],b=inner[j];if(!a||!b)continue;const ka=(a.g.ranked||[])[0];
+    if(ka&&ka===(b.g.ranked||[])[0]&&!!a.g.dark===!!b.g.dark&&now-a.ts>LIFE.merge&&now-b.ts>LIFE.merge&&(a.g.merged||1)+(b.g.merged||1)<=4){
+      const g=a.g;g.segs=clamp((g.segs||1)+(b.g.segs||1),1,10);g.hues=[...new Set([...(g.hues||[]),...(b.g.hues||[])])].slice(0,5);g.parts=[...new Set([...(g.parts||[]),...(b.g.parts||[])])];g.objects=[...new Set([...(g.objects||[]),...(b.g.objects||[])])];g.intensity=Math.max(g.intensity||.5,b.g.intensity||.5);g.merged=(g.merged||1)+(b.g.merged||1);
+      inner.splice(j,1);j--;burstAt();changed=true}}
+  // 4. very old sugs become the land of the bubble
+  while(inner.length>3&&(inner.length>9&&now-inner[0].ts>LIFE.land||now-inner[0].ts>LIFE.land*3)){const x=inner.shift();me.land.push({h:(x.g.hues||[270])[0],d:!!x.g.dark,o:x.g.objects||[]});changed=true}
+  me.land=me.land.slice(-40);
+  // 5. an answered thought comes home along its thread, changed
+  if(dbOk&&me.id&&db)world.filter(s=>s.owner===me.id&&!s.home&&(s.replies||0)>0&&now-(s.ts||now)>LIFE.home&&!me.returned[s.id]).forEach(s=>{me.returned[s.id]=1;
+    inner.push({g:Object.assign({},s.g,{mixH:(s.replyHues||[]).slice(-4),parts:[...new Set([...(s.g.parts||[]),...(s.parts||[])])],came:1}),ts:now});
+    db.doc("sugs/"+s.id).update({home:true}).catch(()=>{});toast(T("Сулласан бодол чинь утсаараа гэртээ буцаж ирлээ."));burstAt();changed=true});
+  if(changed)save();
+}
+setInterval(lifeTick,5000);
+// ---------- UI ----------
+const whisper=$("whisper"),input=$("input"),form=$("form"),note=$("note");
+const typing=makeTyping(input), replyTyping=makeTyping($("replyInput"));
+function toast(msg){const el=$("toast");el.textContent=msg;el.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>el.style.opacity=0,2600)}
+function lights(){$("innerFill").style.width=me.inner+"%";$("outerFill").style.width=me.outer+"%"}
+const WHISPERS=["Энд юу байгаасай гэж хүсэж байна?","Өнөөдөр чамд юу хамгийн их санагдав?","Хэнд ч хэлээгүй нэг бодол байна уу?","Чиний цонхоор юу харагддаг вэ?","Сүүлд хэзээ инээсэн бэ?"];
+function setMode(m){
+  mode=m;if(m==="world"){cam.init=false;HOOD=null}releasing=false;$("closeCard").click&&($("readCard").hidden=true);
+  $("actions").hidden=m==="wake";
+  $("goOut").hidden=m!=="home";$("goHome").hidden=m!=="world";$("releaseMode").hidden=m!=="home";
+  form.hidden=m==="world";
+  if(m==="wake"){whisper.textContent=T(WHISPERS[0]);note.textContent=T("Бичсэн үг чинь сүг болно. Хэрхэн бичсэн нь ч гэсэн.")}
+  if(m==="home"){whisper.textContent=T(WHISPERS[(me.writes)%WHISPERS.length]);note.textContent=T("Энд бичсэн зүйл зөвхөн чиний бөмбөлөгт үлдэнэ.");input.placeholder=T("Бич…")}
+  if(m==="world"){whisper.textContent=T("Төөрсөн сүг дээр дарж, сонсоорой.");note.textContent=T("Цэнхэр утас бүрийн цаана нэг хүн бий.")}
+}
+$("goOut").onclick=()=>{if(me.inner<20){toast(T("Дотоод гэрэл чинь хэтэрхий бүдэг байна. Эхлээд гэртээ нэг зүйл бүтээ."));return}setMode("world")};
+$("goHome").onclick=()=>setMode("home");
+$("releaseMode").onclick=()=>{releasing=!releasing;$("releaseMode").textContent=releasing?T("Болих"):T("Бодлоо сулла");whisper.textContent=releasing?T("Энэ бодол чинь ертөнцөөр төөрнө. Хэн нэгэн олж сонсож магад."):T(WHISPERS[me.writes%WHISPERS.length]);note.textContent=releasing?T("Сулласан бодол нэргүйгээр бусдад харагдана. Хувийн мэдээлэл бүү бич."):T("Энд бичсэн зүйл зөвхөн чиний бөмбөлөгт үлдэнэ.");input.placeholder=releasing?T("Сулласан бодол…"):T("Бич…");input.focus()};
+
+input.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
+$("replyInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("replyForm").requestSubmit()}});
+
+form.addEventListener("submit",async e=>{
+  e.preventDefault();const text=input.value.trim();if(!text)return;
+  const g=analyze(text,typing.read(),me);g.seed=hash(text+Date.now());updateTraits(me,g);
+  input.value="";input.style.height="auto";typing.reset();
+  if(releasing&&dbOk){
+    try{await db.collection("sugs").add({owner:me.id,text:text.slice(0,280),g,replyHues:[],replies:0,ts:Date.now()});me.inner=clamp(me.inner+4,0,100);sugSong(g);toast(T("Бодол чинь цэнхэр утсаа чирсээр ертөнц рүү гарлаа."));$("releaseMode").click()}
+    catch(err){toast(T("Сулалж чадсангүй. Дахин оролдоорой."))}
+  }else{
+    if(g.parts.length&&inner.length){const prev=inner[inner.length-1].g;prev.parts=[...new Set([...(prev.parts||[]),...g.parts])];g.parts=[]}
+    if(g.excl>=2||g.caps){g.hand=(g.hand+1+g.excl%3)%4;stirs.push({x:W/2,y:H*.44,vx:0,vy:0,t:performance.now()/1000,burst:1})}
+    inner.push({g,ts:Date.now()});sugSong(g);me.writes++;me.inner=clamp(me.inner+(me.inner<60?12:6),0,100);
+    if(mode==="wake"&&me.writes>=2){setMode("home");toast(T("Хана чинь туналлаа. Гадагш гарч болно."))}
+    else if(mode==="wake")whisper.textContent=WHISPERS[1];
+    else whisper.textContent=T(WHISPERS[me.writes%WHISPERS.length]);
+    if(g.objects.length)toast(T("Бөмбөлөг дотор чинь шинэ зүйл биежлээ."));
+  }
+  save();lights();
+});
+
+// world interaction
+let reading=null;
+const ptrs=new Map();let dragMoved=false,pinch=null;cv.style.touchAction="none";
+cv.addEventListener("pointerdown",e=>{if(mode!=="world")return;ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,x0:e.clientX,y0:e.clientY,cx0:cam.x,cy0:cam.y});dragMoved=false;
+  if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:cam.z}}});
+addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p||mode!=="world")return;p.x=e.clientX;p.y=e.clientY;
+  if(ptrs.size===2&&pinch){const[a,b]=[...ptrs.values()];cam.z=clamp(pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/(pinch.d||1),.3,1.8);dragMoved=true;return}
+  const dx=p.x-p.x0,dy=p.y-p.y0;if(Math.hypot(dx,dy)>6)dragMoved=true;if(dragMoved){cam.x=clamp(p.cx0-dx/cam.z,-WR,WR);cam.y=clamp(p.cy0-dy/cam.z,-WR,WR+160)}});
+const ptrEnd=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(ptrs.size===1){const q=[...ptrs.values()][0];q.x0=q.x;q.y0=q.y;q.cx0=cam.x;q.cy0=cam.y}};
+addEventListener("pointerup",ptrEnd);addEventListener("pointercancel",ptrEnd);
+cv.addEventListener("wheel",e=>{if(mode!=="world")return;e.preventDefault();const r=cv.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,wx=(sx-LASTVT.ox)/LASTVT.z,wy=(sy-LASTVT.oy)/LASTVT.z;cam.z=clamp(cam.z*Math.exp(-e.deltaY*.0015),.3,1.8);cam.x=wx-(sx-W/2)/cam.z;cam.y=wy-(sy-H/2)/cam.z},{passive:false});
+cv.addEventListener("click",e=>{
+  if(mode==="wake")return;if(mode==="world"&&dragMoved){dragMoved=false;return}const r=cv.getBoundingClientRect(),x=(e.clientX-r.left-LASTVT.ox)/LASTVT.z,y=(e.clientY-r.top-LASTVT.oy)/LASTVT.z;
+  const h=hit.slice().reverse().find(h=>Math.hypot(h.x-x,h.y-y)<h.r/(mode==="world"?Math.min(1,LASTVT.z):1));
+  if(!h){if(mode==="world"){const b=bhit.find(b=>Math.hypot(b.x-x,b.y-y)<b.r+12);if(b){if(b.id===me.id)setMode("home");else{stirs.push({x:e.clientX,y:e.clientY,vx:0,vy:0,t:performance.now()/1000,burst:1});toast(T("Хана нь хаалттай. Дотор нь юу байгааг гаднаас харахгүй."))}}}return}
+  audioInit();if(h.s.g)sugSong(Object.assign({},h.s.g,{dark:h.s.g.dark&&!(replies.filter(r=>r.sugId===h.s.id&&r.g&&!r.g.dark).length>=2)}));stirs.push({x:e.clientX,y:e.clientY,vx:0,vy:0,t:performance.now()/1000,burst:1});
+  const card=$("readCard");card.style.opacity=0;card.style.transition="opacity .9s";setTimeout(()=>card.style.opacity=1,650);
+  reading=h.s;$("readText").textContent="“"+h.s.text+"”";
+  const n=replies.filter(r=>r.sugId===h.s.id).length;
+  $("readMeta").textContent=(h.s.owner===me.id?T("Чиний сулласан бодол. "):"")+(n?n+T(" хүн энэ сүгтэй нийлсэн."):T("Одоохондоо хэн ч хариулаагүй."));
+  $("replyForm").hidden=h.s.owner===me.id;$("readCard").hidden=false;if(h.s.owner!==me.id)$("replyInput").focus();
+});
+$("closeCard").onclick=()=>{$("readCard").hidden=true;reading=null};
+addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("readCard").hidden)$("closeCard").click()});
+$("replyForm").addEventListener("submit",async e=>{
+  e.preventDefault();const text=$("replyInput").value.trim();if(!text||!reading||!dbOk)return;
+  const g=analyze(text,replyTyping.read(),me);g.seed=hash(text+Date.now());updateTraits(me,g);
+  $("replyInput").value="";replyTyping.reset();
+  const target=reading;$("readCard").hidden=true;sugSong(g);
+  const[x1,y1]=SPOS[target.id]||[W/2,H/2];flights.push({g,x0:W/2,y0:H-120,x1,y1,start:performance.now()});
+  try{
+    await db.collection("replies").add({sugId:target.id,from:me.id,toOwner:target.owner,text:text.slice(0,280),g,ts:Date.now()});
+    const hues=(target.replyHues||[]).concat(g.hues.slice(0,1)).slice(-6);
+    const np=[...new Set([...(target.parts||[]),...(g.parts||[])])].slice(0,9);
+    await db.doc("sugs/"+target.id).update({replyHues:hues,replies:(target.replies||0)+1,parts:np});
+    if(g.dark){me.outer=clamp(me.outer-8,0,100);toast(T("Чиний сүг харанхуй байлаа. Буланд нэг хар сүг нэмэгдлээ."))}
+    else{me.outer=clamp(me.outer+10,0,100);me.inner=clamp(me.inner+3,0,100);toast(T("Чиний сүг тэр бодолтой нийллээ."))}
+    save();lights();
+  }catch(err){toast(T("Хариу хүрсэнгүй. Дахин оролдоорой."))}
+});
+
+// slow decay + owl
+setInterval(()=>{
+  if(mode==="world"){me.inner=clamp(me.inner-1,0,100);lights();save()}
+  const owl=$("owl");owl.style.opacity=(mode==="world"&&me.inner<25)?1:0;
+},20000);
+
+// replies to my sugs, seen when I come back
+function checkReturned(){
+  if(!me.id)return;const mine=new Set(world.filter(s=>s.owner===me.id).map(s=>s.id));
+  const got=replies.filter(r=>mine.has(r.sugId)&&r.from!==me.id&&!me.seenReplies[r.id]);
+  if(got.length){got.forEach(r=>me.seenReplies[r.id]=1);const good=got.filter(r=>!(r.g&&r.g.dark)).length;me.outer=clamp(me.outer+good*8,0,100);save();lights();toast(got.length===1?T("Чиний сулласан сүг буцаж ирэхдээ өөр болжээ. Хэн нэгэн сонссон."):got.length+T(" хүн чиний сүгийг сонсчээ."))}
+}
+
+// ---------- connect shared world ----------
+async function connect(){
+  if(!window.claude||!window.claude.use){return}
+  try{
+    const [d,u]=await Promise.all([claude.use("db"),claude.use("user")]);
+    if(u&&u.id){const id=await u.id();if(id&&id!==me.id){me.seenReplies={};setHand(id)}}
+    if(!d)return;db=d;
+    const timer=setTimeout(()=>{if(!dbOk)toast(T("Хуваалцах ертөнц удаан ачаалж байна."))},10000);
+    db.collection("sugs").orderBy("ts","asc").limit(200).onSnapshot(snap=>{dbOk=true;clearTimeout(timer);world=snap.docs.map(d=>Object.assign({id:d.id},d.data()));checkReturned()},()=>{});
+    db.collection("replies").orderBy("ts","asc").limit(400).onSnapshot(snap=>{replies=snap.docs.map(d=>Object.assign({id:d.id},d.data()));checkReturned()},()=>{});
+  }catch(e){}
+}
+
+setMode(mode);lights();connect();
+window.__sug={analyze,me,drawSug,inner,test:(w,r)=>{world=w;replies=r;dbOk=true;me.id=me.id||"me1"},setMode,spos:()=>SPOS,hood:()=>HOOD}; // for testing
+})();
+</script>
