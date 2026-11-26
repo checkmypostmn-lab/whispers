@@ -411,6 +411,41 @@ function bubbleLook(){
 }
 
 let t0=performance.now(), flights=[];
+
+// ---------- creatures from Sena's own paintings: they drift through the whole world ----------
+const CRE_BASE="creatures/";
+const CRE_DEF=[{n:"jealousy",emo:["envy","anger"],sz:.30,glow:300},{n:"bat",emo:["fear","anger"],sz:.17,glow:270},{n:"octopus",emo:["curious","hope"],sz:.22,glow:250},
+ {n:"owl",emo:["curious","kind"],sz:.15,glow:40},{n:"shadow1",emo:["lonely","sad"],sz:.12,glow:260},{n:"shadow2",emo:["lonely","fear"],sz:.13,glow:280},
+ {n:"bird",emo:["joy","hope","kind"],sz:.07,glow:80},{n:"corner",emo:["fear","sad","anger"],sz:.24,glow:265}];
+const CRE=[];
+if(CRE_BASE){CRE_DEF.forEach((d,i)=>{const im=new Image();im.src=CRE_BASE+d.n+".png";const r=rng(77+i);
+ CRE.push(Object.assign({im,x:r(),y:.1+r()*.8,vx:(r()-.5)*.012,ph:r()*6.28,sp:.6+r()*.6,call:0,tx:0,ty:0,flee:0,fx:0,fy:0,sx:0,sy:0},d))})}
+let CHIT=[];
+function drawCreatures(t,dt){CHIT=[];if(!CRE.length)return;const M=Math.min(W,H),home=mode!=="world",bx=W/2,by=H*.44;
+ for(const c of CRE){const im=c.im;if(!im.complete||!im.naturalWidth)continue;
+  // slow drift across the whole sky, wrapping around
+  c.x+=c.vx*dt*.25;if(c.x<-.25)c.x=1.25;if(c.x>1.25)c.x=-.25;
+  let px=c.x*W+Math.sin(t*.13*c.sp+c.ph)*W*.06,py=c.y*H+Math.sin(t*.21*c.sp+c.ph*1.7)*H*.05;
+  // called by a matching feeling: come close to the bubble for a while
+  if(c.call>0){c.call-=dt;const k=Math.min(1,c.call/3);const ang=t*.25+c.ph,rr=M*.42;px=lerp(px,bx+Math.cos(ang)*rr,k*.85);py=lerp(py,by+Math.sin(ang)*rr*.8,k*.85)}
+  // stirring pushes them
+  for(const s of stirs){const age=NOW-s.t;if(age>2.6||age<0)continue;const dx=px-s.x,dy=py-s.y,d2=dx*dx+dy*dy;if(d2>60000)continue;const f=Math.exp(-d2/18000)*Math.exp(-age*1.2);c.sx+=(s.vx*.6+dx*.05*(s.burst?3:1))*f*dt*4;c.sy+=(s.vy*.6+dy*.05*(s.burst?3:1))*f*dt*4}
+  c.sx*=Math.pow(.25,dt);c.sy*=Math.pow(.25,dt);c.x+=c.sx/W*dt;c.y=clamp(c.y+c.sy/H*dt,-.1,1.1);
+  if(c.flee>0){c.flee-=dt;px+=c.fx*(1-c.flee)*90;py+=c.fy*(1-c.flee)*90}
+  const base=M*c.sz*(home?.9:.75),breath=1+Math.sin(t*1.1*c.sp+c.ph)*.05,ar=im.naturalHeight/im.naturalWidth,w=base*breath,h=base*ar*(2-breath);
+  const rot=Math.sin(t*.3*c.sp+c.ph)*.12+c.sx*.002,a=(home?.5:.62)*(c.call>0?1.25:1);
+  cx.save();cx.translate(px,py);cx.rotate(rot);
+  // soft halo in its own colour
+  const hg=cx.createRadialGradient(0,0,0,0,0,w*.75);hg.addColorStop(0,hsl(c.glow,80,65,.16*a));hg.addColorStop(1,hsl(c.glow,80,65,0));cx.fillStyle=hg;cx.beginPath();cx.arc(0,0,w*.75,0,7);cx.fill();
+  // the painting itself breathes: a slow sway and stretch, no slicing (no seams)
+  cx.globalAlpha=Math.min(1,a);const sk=Math.sin(t*1.3*c.sp+c.ph)*.08*(1+ENERGY*2);cx.transform(1,0,sk,1,0,0);
+  cx.drawImage(im,-w/2,-h/2,w,h);
+  cx.restore();cx.globalAlpha=1;CHIT.push({c,x:px,y:py,r:Math.max(w,h)*.42})}}
+function creatureCall(g){if(!g||!g.ranked)return;const e=g.ranked[0];const m=CRE.filter(c=>c.emo.includes(e));if(!m.length)return;const c=m[Math.floor(Math.random()*m.length)];c.call=22}
+function creatureClick(x,y){const h=CHIT.slice().reverse().find(h=>Math.hypot(h.x-x,h.y-y)<h.r);if(!h)return false;const c=h.c;audioInit();
+ const base=SCALE[(CRE.indexOf(c)*3)%SCALE.length]*(c.emo.includes("fear")||c.emo.includes("sad")?.5:1);[0,4,7].forEach((st,i)=>bell(base*Math.pow(2,st/12),i*.12,.08,c.emo.includes("sad")));
+ const a=Math.random()*6.28;c.fx=Math.cos(a);c.fy=Math.sin(a);c.flee=1;c.call=0;stirs.push({x,y,vx:0,vy:0,t:performance.now()/1000,burst:1});return true}
+let lastT=0;
 function frame(now){
   const t=(now-t0)/1000;
   cx.clearRect(0,0,W,H);
@@ -422,6 +457,7 @@ function frame(now){
   {const BH=[285,320,200,250,35];for(let k=0;k<5;k++){const d=Math.sin(t*.05+k*1.7)*H*.05,q=Rec();q.moveTo(-W*.2,H*(.95-k*.04)+d);q.bezierCurveTo(W*.3,H*.6+d*2,W*.6,H*.35-d,W*1.2,H*(.05+k*.05)-d);flow(q.P[0],{w:W*.16,hues:[BH[k],BH[(k+2)%5]],t:t*.25,seed:500+k,layers:3,taper:"none",wave:W*.6,amp:.5,a:mode==="world"?.18:.3,max:40})}}
   const sr=rng(99),SH=[300,320,190,215,265,45];for(let i=0;i<90;i++){const x=sr()*W,y=sr()*H,h=SH[Math.floor(sr()*6)],big=sr()<.06,z=big?1.8:.6+sr()*1.2,tw=.3+.7*Math.abs(Math.sin(t*(.4+sr())+i));cx.fillStyle=hsl(h,85,75,.5*tw);cx.fillRect(x-z/2,y-z/2,z,z);if(big&&tw>.7){cx.fillRect(x-6,y-.4,12,.8);cx.fillRect(x-.4,y-6,.8,12)}}
   stirTick();audioTick();
+  {const dt=Math.min(.1,Math.max(0,t-lastT));lastT=t;drawCreatures(t,dt)}
   if(mode==="world")drawWorld(t);else drawHome(t);
   drawTrail(t);
   // flights (a reply flying to its sug)
@@ -671,7 +707,7 @@ $("replyInput").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){
 
 form.addEventListener("submit",async e=>{
   e.preventDefault();const text=input.value.trim();if(!text)return;
-  const g=analyze(text,typing.read(),me);g.seed=hash(text+Date.now());updateTraits(me,g);
+  const g=analyze(text,typing.read(),me);g.seed=hash(text+Date.now());updateTraits(me,g);creatureCall(g);
   input.value="";input.style.height="auto";typing.reset();
   if(releasing&&dbOk){
     try{await db.collection("sugs").add({owner:me.id,text:text.slice(0,280),g,replyHues:[],replies:0,ts:Date.now()});me.inner=clamp(me.inner+4,0,100);sugSong(g);toast(T("Бодол чинь цэнхэр утсаа чирсээр ертөнц рүү гарлаа."));$("releaseMode").click()}
@@ -702,6 +738,7 @@ cv.addEventListener("wheel",e=>{if(mode!=="world")return;e.preventDefault();cons
 cv.addEventListener("click",e=>{
   if(mode==="wake")return;if(mode==="world"&&dragMoved){dragMoved=false;return}const r=cv.getBoundingClientRect(),x=(e.clientX-r.left-LASTVT.ox)/LASTVT.z,y=(e.clientY-r.top-LASTVT.oy)/LASTVT.z;
   const h=hit.slice().reverse().find(h=>Math.hypot(h.x-x,h.y-y)<h.r/(mode==="world"?Math.min(1,LASTVT.z):1));
+  if(!h&&creatureClick(e.clientX-r.left,e.clientY-r.top))return;
   if(!h){if(mode==="world"){const b=bhit.find(b=>Math.hypot(b.x-x,b.y-y)<b.r+12);if(b){if(b.id===me.id)setMode("home");else{stirs.push({x:e.clientX,y:e.clientY,vx:0,vy:0,t:performance.now()/1000,burst:1});toast(T("Хана нь хаалттай. Дотор нь юу байгааг гаднаас харахгүй."))}}}return}
   audioInit();if(h.s.g)sugSong(Object.assign({},h.s.g,{dark:h.s.g.dark&&!(replies.filter(r=>r.sugId===h.s.id&&r.g&&!r.g.dark).length>=2)}));stirs.push({x:e.clientX,y:e.clientY,vx:0,vy:0,t:performance.now()/1000,burst:1});
   const card=$("readCard");card.style.opacity=0;card.style.transition="opacity .9s";setTimeout(()=>card.style.opacity=1,650);
