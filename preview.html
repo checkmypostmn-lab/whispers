@@ -519,13 +519,13 @@ function glass(x,y,r,t,o){const z=(typeof VT!=="undefined"&&VT.z)||1,s=DPR*z,pad
  g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation="source-over";g.clearRect(0,0,S,S);g.setTransform(s,0,0,s,0,0);
  blobPath(g,c,c,r,t,sd,o.amp||.03);g.save();g.clip();
  // 1. thin soap-film colours, only near the rim
- if(g.createConicGradient){const cg=g.createConicGradient(t*.12+sd,c,c),L=[...hs,190,hs[0]];L.forEach((h,i)=>cg.addColorStop(i/(L.length-1),hsl(h,95,72,.95)));g.fillStyle=cg;g.fillRect(0,0,c*2,c*2);
-  g.globalCompositeOperation="destination-out";const m=g.createRadialGradient(c,c,0,c,c,r*1.04);m.addColorStop(0,"rgba(0,0,0,1)");m.addColorStop(.72,"rgba(0,0,0,1)");m.addColorStop(1,"rgba(0,0,0,.25)");g.fillStyle=m;g.fillRect(0,0,c*2,c*2)}
+ if(g.createConicGradient){const cg=g.createConicGradient(t*.12+sd,c,c),L=[...hs,190,hs[0]];L.forEach((h,i)=>cg.addColorStop(i/(L.length-1),hsl(h,95,72,.7)));g.fillStyle=cg;g.fillRect(0,0,c*2,c*2);
+  g.globalCompositeOperation="destination-out";const m=g.createRadialGradient(c,c,0,c,c,r*1.04);m.addColorStop(0,"rgba(0,0,0,1)");m.addColorStop(.8,"rgba(0,0,0,1)");m.addColorStop(1,"rgba(0,0,0,.25)");g.fillStyle=m;g.fillRect(0,0,c*2,c*2)}
  // 2. the liquid body behind the film: clear in the middle, milky towards the edge
- g.globalCompositeOperation="destination-over";const bg=g.createRadialGradient(c-r*.12,c-r*.18,r*.05,c,c,r*1.02);bg.addColorStop(0,`rgba(255,255,255,${milk*.08})`);bg.addColorStop(.65,`rgba(236,232,255,${.04+milk*.14})`);bg.addColorStop(.92,`rgba(248,246,255,${.18+milk*.3})`);bg.addColorStop(1,`rgba(255,255,255,${.3+milk*.35})`);g.fillStyle=bg;g.fillRect(0,0,c*2,c*2);
+ g.globalCompositeOperation="destination-over";const bg=g.createRadialGradient(c-r*.12,c-r*.18,r*.05,c,c,r*1.02);bg.addColorStop(0,"rgba(255,255,255,0)");bg.addColorStop(.7,`rgba(236,232,255,${milk*.1})`);bg.addColorStop(.93,`rgba(248,246,255,${.08+milk*.2})`);bg.addColorStop(1,`rgba(255,255,255,${.2+milk*.25})`);g.fillStyle=bg;g.fillRect(0,0,c*2,c*2);
  g.globalCompositeOperation="source-over";
  // 3. light bouncing inside, lower right
- const bl=g.createRadialGradient(c+r*.38,c+r*.52,0,c+r*.38,c+r*.52,r*.6);bl.addColorStop(0,hsl(hs[1%hs.length],90,80,.32));bl.addColorStop(1,hsl(hs[1%hs.length],90,80,0));g.fillStyle=bl;g.fillRect(0,0,c*2,c*2);
+ const bl=g.createRadialGradient(c+r*.38,c+r*.52,0,c+r*.38,c+r*.52,r*.6);bl.addColorStop(0,hsl(hs[1%hs.length],90,80,.18));bl.addColorStop(1,hsl(hs[1%hs.length],90,80,0));g.fillStyle=bl;g.fillRect(0,0,c*2,c*2);
  // 4. the big soft window light, upper left, and one bright drop
  g.save();g.translate(c-r*.36,c-r*.44);g.rotate(-.65);g.scale(1,.5);const hl=g.createRadialGradient(0,0,0,0,0,r*.42);hl.addColorStop(0,"rgba(255,255,255,.62)");hl.addColorStop(.5,"rgba(255,255,255,.22)");hl.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=hl;g.beginPath();g.arc(0,0,r*.42,0,7);g.fill();g.restore();
  const sp=g.createRadialGradient(c-r*.52,c-r*.2,0,c-r*.52,c-r*.2,r*.07);sp.addColorStop(0,"rgba(255,255,255,.85)");sp.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=sp;g.beginPath();g.arc(c-r*.52,c-r*.2,r*.07,0,7);g.fill();
@@ -543,7 +543,7 @@ function drawHome(t){
   const hollow=me.outer>70&&me.inner<30;
   const ig=cx.createRadialGradient(cxm,cym-R*.2,0,cxm,cym,R);
   const ih=hollow?250:lerp(260,40,innerK);
-  ig.addColorStop(0,hsl(ih,hollow?8:50,18+innerK*38,.9));ig.addColorStop(1,hsl(ih,hollow?5:40,10+innerK*16,.85));
+  ig.addColorStop(0,hsl(ih,hollow?8:50,18+innerK*38,.28));ig.addColorStop(1,hsl(ih,hollow?5:40,10+innerK*16,.18));
   cx.fillStyle=ig;blobPath(cx,cxm,cym,R,t,BS,AMP);cx.fill();
   // inner world: objects become simple ink shapes, sugs live there
   cx.save();blobPath(cx,cxm,cym,R-2,t,BS,AMP);cx.clip();
@@ -556,7 +556,7 @@ function drawHome(t){
   const wallA=lerp(0.85,0.25,L.clarity);
   cx.lineWidth=2+ (1-L.clarity)*6;
   const wh=200+Math.sin(t*(0.5+L.wobble*3))*L.wobble*80;
-  {const ph=[wh,...inner.slice(-6).flatMap(x=>x.g.hues||[]),290,320].slice(0,5);glass(cxm,cym,R,t,{seed:BS,amp:AMP,hues:ph,milk:lerp(.85,.15,L.clarity)});}
+  {const ph=[wh,...inner.slice(-6).flatMap(x=>x.g.hues||[]),290,320].slice(0,5);glass(cxm,cym,R,t,{seed:BS,amp:AMP,hues:ph,milk:lerp(.35,0,L.clarity)});}
 
   if(mode==="wake"){cx.fillStyle=`rgba(40,32,62,${0.55-me.writes*0.22})`;blobPath(cx,cxm,cym,R,t,BS,AMP);cx.fill()}
   // iridescent sheen
@@ -657,7 +657,7 @@ function drawWorld(t){
     flow(quadP(A[0],A[1],(A[0]+B[0])/2,(A[1]+B[1])/2+(mut?-50:50),B[0],B[1]),mut?{w:2+w*1.2,hues:[42,35,50],t,seed:hash(p.ids.join()),layers:3,wave:90,amp:.6,a:.5+w*.08}:{w:3,hues:[230,240],t,seed:hash(p.ids.join())+1,layers:2,wave:80,amp:.5,a:.6,dark:true})});
   // every bubble: from outside only a smooth shell (book ch.10); yours is warm
   bhit=[];LY.ids.forEach(id=>{const[bx,by]=BP[id],mineB=id===me.id,r=mineB?48:36+hash(id)%10;bhit.push({id,x:bx,y:by,r});
-    const sd=hash(id)%100/10;glassShadow(bx,by+Math.sin(t*.6+sd)*2,r,t,mineB?42:220,mineB?.9:.6);glass(bx,by+Math.sin(t*.6+sd)*2,r,t,mineB?{seed:sd,amp:.035,hues:[42,290,320],milk:.35}:{seed:sd,amp:.03,hues:[200,230,280],milk:.5,a:.8})});
+    const sd=hash(id)%100/10;glassShadow(bx,by+Math.sin(t*.6+sd)*2,r,t,mineB?42:220,mineB?.9:.6);glass(bx,by+Math.sin(t*.6+sd)*2,r,t,mineB?{seed:sd,amp:.035,hues:[42,290,320],milk:.1}:{seed:sd,amp:.03,hues:[200,230,280],milk:.15,a:.8})});
   // released thoughts drift near their owner, tied by the blue thread (book ch.11)
   const live=world.slice(-80).filter(s=>LY.set.has(s.owner)&&s.g&&!s.home&&!seaOf(s)&&now-(s.ts||now)>LIFE.meet),met={},used=new Set();
   live.forEach(a=>{if(used.has(a.id))return;const k=(a.g.ranked||[])[0];if(!k)return;const b=live.find(b=>!used.has(b.id)&&b.id!==a.id&&b.owner!==a.owner&&(b.g.ranked||[])[0]===k&&!!b.g.dark===!!a.g.dark);if(b){used.add(a.id);used.add(b.id);met[a.id]=b;met[b.id]=a}});
